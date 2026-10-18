@@ -38,6 +38,9 @@ const qtyInput = document.getElementById("quantity");
 const unitSelect = document.getElementById("unit");
 const expiresInput = document.getElementById("expires");
 const searchInput = document.getElementById("search");
+const expiringSection = document.getElementById("expiring");
+const expiringCount = document.getElementById("expiring-count");
+const expiringList = document.getElementById("expiring-list");
 const tabs = document.querySelectorAll(".tab");
 
 // Redigeringsvinduet
@@ -161,6 +164,8 @@ function render() {
 
   emptyEl.textContent = searching ? "Ingen treff." : "Ingen varer her ennå.";
   emptyEl.hidden = visible.length > 0;
+
+  renderExpiring(searching);
 }
 
 // Skriv antall varer på hver fane, f.eks. "Fryser (4)"
@@ -194,10 +199,62 @@ function expiryInfo(item) {
     year: "numeric",
   });
 
-  if (daysLeft < 0) return { text: `Gikk ut ${pretty}`, status: "expired" };
-  if (daysLeft === 0) return { text: "Går ut i dag", status: "soon" };
-  if (daysLeft <= 3) return { text: `Går ut ${pretty}`, status: "soon" };
-  return { text: `Går ut ${pretty}`, status: null };
+  if (daysLeft === -1) return { text: "Gikk ut i går", status: "expired", daysLeft };
+  if (daysLeft < 0) return { text: `Gikk ut ${pretty}`, status: "expired", daysLeft };
+  if (daysLeft === 0) return { text: "Går ut i dag", status: "soon", daysLeft };
+  if (daysLeft === 1) return { text: "Går ut i morgen", status: "soon", daysLeft };
+  if (daysLeft <= 3) return { text: `Går ut ${pretty}`, status: "soon", daysLeft };
+  return { text: `Går ut ${pretty}`, status: null, daysLeft };
+}
+
+// Hvor mange dager frem "Går snart ut"-oversikten ser
+const EXPIRING_DAYS = 7;
+
+// Tegn utløpsboksen: varer fra alle steder, delt i to grupper –
+// "Har gått ut" og "Går snart ut" (innen 7 dager)
+function renderExpiring(searching) {
+  const withDate = items.filter((item) => item.expires).sort(compareItems);
+  const expired = withDate.filter((item) => expiryInfo(item).daysLeft < 0);
+  const soon = withDate.filter((item) => {
+    const days = expiryInfo(item).daysLeft;
+    return days >= 0 && days <= EXPIRING_DAYS;
+  });
+  const total = expired.length + soon.length;
+
+  expiringSection.hidden = searching || total === 0;
+  expiringSection.classList.toggle("has-expired", expired.length > 0);
+  expiringCount.textContent = `(${total})`;
+  expiringList.innerHTML = "";
+
+  addExpiringGroup("Har gått ut", "expired", expired);
+  addExpiringGroup("Går snart ut", "soon", soon);
+}
+
+// Én gruppe i utløpsboksen: overskrift + varer (hoppes over hvis tom)
+function addExpiringGroup(title, status, groupItems) {
+  if (groupItems.length === 0) return;
+
+  const heading = document.createElement("li");
+  heading.className = `expiring-heading ${status}`;
+  heading.textContent = `${title} (${groupItems.length})`;
+  expiringList.append(heading);
+
+  for (const item of groupItems) {
+    const expiry = expiryInfo(item);
+    const li = document.createElement("li");
+    li.className = "expiring-item";
+    if (expiry.status) li.classList.add(expiry.status);
+    li.dataset.id = item.id;
+
+    const name = document.createElement("span");
+    name.textContent = item.name;
+
+    const meta = document.createElement("small");
+    meta.textContent = `${LOCATIONS[item.location]} · ${expiry.text}`;
+
+    li.append(name, meta);
+    expiringList.append(li);
+  }
 }
 
 // Sortering: varer med dato først (snarest øverst), så resten alfabetisk
@@ -285,6 +342,14 @@ listEl.addEventListener("click", (event) => {
     if (!confirm(`Slette ${item.name}?`)) return;
     deleteItem(id).catch(showError);
   }
+});
+
+// Trykk på en vare i "Går snart ut" åpner redigeringsvinduet
+expiringList.addEventListener("click", (event) => {
+  const li = event.target.closest(".expiring-item");
+  if (!li) return;
+  const item = items.find((i) => i.id === li.dataset.id);
+  if (item) openEdit(item);
 });
 
 // ---------- Redigering ----------
@@ -422,3 +487,11 @@ signupBtn.addEventListener("click", () => {
 logoutBtn.addEventListener("click", () => {
   logOut();
 });
+
+// ---------- PWA ----------
+
+// Start service workeren (sw.js), som gjør at appen kan installeres
+// og åpnes uten nett
+if ("serviceWorker" in navigator) {
+  navigator.serviceWorker.register("sw.js");
+}

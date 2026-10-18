@@ -5,6 +5,18 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Matlager</title>
   <link rel="stylesheet" href="style.css">
+
+  <!-- App-ikon og PWA (installere på hjemskjermen) -->
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+  <link rel="icon" href="icons/icon-192.png" type="image/png" sizes="192x192">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+  <meta name="apple-mobile-web-app-title" content="Matlager">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <!-- Farge på statuslinjen på mobil – samme som bakgrunnen i lys/mørk modus -->
+  <meta name="theme-color" content="#f4f6f4" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#141a17" media="(prefers-color-scheme: dark)">
 </head>
 <body>
   <header>
@@ -42,6 +54,14 @@
   <div class="search">
     <input id="search" type="search" placeholder="Søk i alle varer">
   </div>
+
+  <!-- Varer som går ut snart, fra alle lagringssteder. Fylles av app.js -->
+  <section id="expiring" class="expiring" hidden>
+    <details open>
+      <summary>Utløpsdato <span id="expiring-count"></span></summary>
+      <ul id="expiring-list"></ul>
+    </details>
+  </section>
 
   <!-- Faner: hvilket lagringssted vi ser på -->
   <nav class="tabs">

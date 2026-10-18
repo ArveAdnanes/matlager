@@ -8,6 +8,7 @@
   --border: #dde3df;
   --danger: #c0392b;
   --warn: #d69e2e;
+  --warn-text: #8a6100; /* mørkere gul, lettere å lese som tekst */
 }
 
 /* Mørk modus: samme variabler, mørke farger. Slår seg på automatisk
@@ -23,6 +24,7 @@
     --border: #2f3a34;
     --danger: #e5675a;
     --warn: #ecc94b;
+    --warn-text: #ecc94b;
   }
 }
 
@@ -46,6 +48,7 @@ body {
 header,
 #login,
 .search,
+.expiring,
 .tabs,
 main {
   max-width: 600px;
@@ -122,6 +125,70 @@ h1 {
 .search input {
   width: 100%;
   margin-bottom: 12px;
+}
+
+/* ---------- Går snart ut ---------- */
+.expiring details {
+  margin-bottom: 12px;
+  padding: 10px 12px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--warn);
+  border-radius: 8px;
+}
+
+/* Rød kant når noe har gått ut, ellers gul */
+.expiring.has-expired details {
+  border-left-color: var(--danger);
+}
+
+.expiring summary {
+  font-weight: 600;
+  cursor: pointer;
+}
+
+/* Gruppeoverskrift: "Har gått ut" (rød) / "Går snart ut" (gul) */
+.expiring-heading {
+  margin-top: 10px;
+  padding-bottom: 2px;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.expiring-heading.expired {
+  color: var(--danger);
+}
+
+.expiring-heading.soon {
+  color: var(--warn-text);
+}
+
+#expiring-list {
+  list-style: none;
+  margin: 8px 0 0;
+  padding: 0;
+}
+
+.expiring-item {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 6px 0;
+  border-top: 1px solid var(--border);
+  cursor: pointer;
+}
+
+.expiring-item small {
+  color: var(--muted);
+  text-align: right;
+}
+
+.expiring-item.soon small {
+  color: var(--warn-text);
+}
+
+.expiring-item.expired small {
+  color: var(--danger);
 }
 
 /* ---------- Faner ---------- */

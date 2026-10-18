@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- Firkantet bakgrunn uten runde hjørner: telefonen klipper selv ikonet
+       til sin form, så innholdet er krympet litt inn mot midten -->
+  <rect width="512" height="512" fill="#1f2a24"/>
+  <g transform="translate(256 256) scale(0.8) translate(-256 -256)">
+    <rect x="116" y="96" width="280" height="320" rx="32" fill="#fff"/>
+    <rect x="144" y="126" width="224" height="74" rx="14" fill="#7cc4f0"/>
+    <rect x="144" y="219" width="224" height="74" rx="14" fill="#3f9d74"/>
+    <rect x="144" y="312" width="224" height="74" rx="14" fill="#e8b04a"/>
+  </g>
+</svg>
