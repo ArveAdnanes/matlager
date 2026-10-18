@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Matlager</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header>
+    <h1>Matlager</h1>
+    <!-- Vises når man er innlogget -->
+    <div id="user-bar" class="user-bar" hidden>
+      <span id="user-label"></span>
+      <button id="logout" type="button">Logg ut</button>
+    </div>
+  </header>
+
+  <!-- Vises mens Firebase sjekker om du allerede er innlogget -->
+  <p id="loading" class="empty">Laster …</p>
+
+  <!-- Innloggingsskjerm -->
+  <section id="login" hidden>
+    <form id="login-form">
+      <h2>Logg inn</h2>
+      <label>Brukernavn
+        <input id="username" type="text" autocomplete="username" autocapitalize="none" required>
+      </label>
+      <label>Passord
+        <input id="password" type="password" autocomplete="current-password" required>
+      </label>
+      <p id="login-error" class="error" hidden></p>
+      <button type="submit" class="primary">Logg inn</button>
+      <button type="button" id="signup">Lag ny bruker</button>
+    </form>
+  </section>
+
+  <!-- Selve appen – vises når man er innlogget -->
+  <div id="app" hidden>
+
+  <!-- Søk i alle lagringssteder -->
+  <div class="search">
+    <input id="search" type="search" placeholder="Søk i alle varer">
+  </div>
+
+  <!-- Faner: hvilket lagringssted vi ser på -->
+  <nav class="tabs">
+    <button class="tab active" data-location="fryser">Fryser <span class="count"></span></button>
+    <button class="tab" data-location="kjoleskap">Kjøleskap <span class="count"></span></button>
+    <button class="tab" data-location="torrvarer">Tørrvarer <span class="count"></span></button>
+  </nav>
+
+  <main>
+    <!-- Skjema for å legge til en ny vare i valgt fane -->
+    <form id="add-form">
+      <input id="name" type="text" placeholder="Vare, f.eks. Kjøttdeig" required>
+      <input id="quantity" type="number" min="0" step="any" placeholder="Antall">
+      <select id="unit">
+        <option value="">–</option>
+        <option>stk</option>
+        <option>pk</option>
+        <option>g</option>
+        <option>kg</option>
+        <option>dl</option>
+        <option>l</option>
+      </select>
+      <label class="date-field">Utløpsdato (valgfritt)
+        <input id="expires" type="date">
+      </label>
+      <button type="submit">Legg til</button>
+    </form>
+
+    <!-- Listen fylles av app.js -->
+    <ul id="list"></ul>
+    <p id="empty" class="empty">Ingen varer her ennå.</p>
+  </main>
+
+  </div>
+
+  <!-- Redigeringsvindu: åpnes når du trykker på en vare -->
+  <dialog id="edit-dialog">
+    <form id="edit-form">
+      <h2>Rediger vare</h2>
+      <label>Navn
+        <input id="edit-name" type="text" required>
+      </label>
+      <div class="row">
+        <label>Antall
+          <input id="edit-quantity" type="number" min="0" step="any">
+        </label>
+        <label>Enhet
+          <select id="edit-unit">
+            <option value="">–</option>
+            <option>stk</option>
+            <option>pk</option>
+            <option>g</option>
+            <option>kg</option>
+            <option>dl</option>
+            <option>l</option>
+          </select>
+        </label>
+      </div>
+      <label>Lagringssted
+        <select id="edit-location">
+          <option value="fryser">Fryser</option>
+          <option value="kjoleskap">Kjøleskap</option>
+          <option value="torrvarer">Tørrvarer</option>
+        </select>
+      </label>
+      <label>Utløpsdato
+        <input id="edit-expires" type="date">
+      </label>
+      <div class="dialog-buttons">
+        <button type="button" id="edit-cancel">Avbryt</button>
+        <button type="submit" class="primary">Lagre</button>
+      </div>
+    </form>
+  </dialog>
+
+  <!-- type="module" gjør at app.js kan importere fra firebase.js -->
+  <script type="module" src="app.js"></script>
+</body>
+</html>

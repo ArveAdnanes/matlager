@@ -1,0 +1,352 @@
+/* Farger samlet ett sted, så de er lette å endre */
+:root {
+  --bg: #f4f6f4;
+  --card: #ffffff;
+  --text: #1f2a24;
+  --muted: #6b7a71;
+  --accent: #2f7d5b;
+  --border: #dde3df;
+  --danger: #c0392b;
+  --warn: #d69e2e;
+}
+
+/* Mørk modus: samme variabler, mørke farger. Slår seg på automatisk
+   når mobilen/PC-en står på mørkt tema. */
+@media (prefers-color-scheme: dark) {
+  :root {
+    color-scheme: dark;
+    --bg: #141a17;
+    --card: #1e2622;
+    --text: #e6ece8;
+    --muted: #93a39a;
+    --accent: #3f9d74;
+    --border: #2f3a34;
+    --danger: #e5675a;
+    --warn: #ecc94b;
+  }
+}
+
+* {
+  box-sizing: border-box;
+}
+
+/* Sørger for at elementer med hidden faktisk skjules (f.eks. skjemaet under søk) */
+[hidden] {
+  display: none !important;
+}
+
+body {
+  margin: 0;
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+}
+
+/* Innholdet er maks 600px bredt og sentrert – fint på både mobil og PC */
+header,
+#login,
+.search,
+.tabs,
+main {
+  max-width: 600px;
+  margin: 0 auto;
+  padding: 0 16px;
+}
+
+/* Tittel til venstre, bruker + Logg ut til høyre */
+header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+h1 {
+  margin: 24px 0 16px;
+  font-size: 1.6rem;
+}
+
+.user-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.user-bar button {
+  padding: 6px 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--card);
+  color: var(--text);
+  font: inherit;
+  cursor: pointer;
+}
+
+/* ---------- Innlogging ---------- */
+#login-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 20px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+}
+
+#login-form h2 {
+  margin: 0;
+  font-size: 1.2rem;
+}
+
+#login-form label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+#login-form button {
+  cursor: pointer;
+}
+
+.error {
+  margin: 0;
+  color: var(--danger);
+}
+
+/* ---------- Søk ---------- */
+.search input {
+  width: 100%;
+  margin-bottom: 12px;
+}
+
+/* ---------- Faner ---------- */
+.tabs {
+  display: flex;
+  gap: 8px;
+}
+
+.tab {
+  flex: 1;
+  padding: 10px 4px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--card);
+  color: var(--text);
+  font-size: 1rem;
+  cursor: pointer;
+}
+
+.count {
+  font-size: 0.85em;
+  opacity: 0.8;
+}
+
+.tab.active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+
+/* Under søk er ingen fane valgt – søket gjelder alle */
+.searching .tab.active {
+  background: var(--card);
+  border-color: var(--border);
+  color: var(--text);
+}
+
+.searching #list {
+  margin-top: 16px;
+}
+
+/* ---------- Skjema ---------- */
+#add-form {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end; /* feltene står på linje selv om datofeltet har overskrift */
+  gap: 8px;
+  margin: 16px 0;
+}
+
+/* Felles stil for alle felt og skjemaknapper (også i redigeringsvinduet) */
+input,
+select,
+form button {
+  padding: 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-size: 1rem;
+  font-family: inherit;
+  background: var(--card);
+  color: var(--text);
+}
+
+#name {
+  flex: 1 1 100%; /* Navnefeltet får hele bredden */
+}
+
+#quantity {
+  flex: 1 1 70px;
+  min-width: 0;
+}
+
+#unit {
+  flex: 1 1 70px;
+}
+
+.date-field {
+  flex: 2 1 160px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+
+#add-form button {
+  flex: 1 1 100%; /* Legg til-knappen får hele bredden */
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+  cursor: pointer;
+}
+
+/* ---------- Liste ---------- */
+#list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  margin-bottom: 8px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+
+/* Navn + infolinje under – trykk her for å redigere */
+.item-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  cursor: pointer;
+}
+
+.item-name {
+  overflow-wrap: anywhere;
+}
+
+.item-meta {
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+
+/* Utløpsdato: gul = går snart ut, rød = har gått ut */
+.item.soon {
+  border-left: 4px solid var(--warn);
+}
+
+.item.expired {
+  border-left: 4px solid var(--danger);
+}
+
+.item.expired .item-meta {
+  color: var(--danger);
+}
+
+.item-qty {
+  min-width: 70px;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+.item button {
+  width: 36px;
+  height: 36px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg);
+  color: var(--text);
+  font-size: 1.2rem;
+  cursor: pointer;
+}
+
+.item .delete {
+  color: var(--danger);
+}
+
+.empty {
+  color: var(--muted);
+  text-align: center;
+}
+
+/* ---------- Redigeringsvindu ---------- */
+dialog {
+  width: min(90vw, 400px);
+  padding: 20px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--card);
+  color: var(--text);
+}
+
+dialog::backdrop {
+  background: rgb(0 0 0 / 0.4);
+}
+
+dialog h2 {
+  margin: 0;
+  font-size: 1.2rem;
+}
+
+#edit-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+#edit-form label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+.row {
+  display: flex;
+  gap: 8px;
+}
+
+.row label {
+  flex: 1;
+  min-width: 0;
+}
+
+.dialog-buttons {
+  display: flex;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.dialog-buttons button {
+  flex: 1;
+  cursor: pointer;
+}
+
+/* Grønn hovedknapp (Lagre, Logg inn) */
+.primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
