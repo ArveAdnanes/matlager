@@ -88,16 +88,22 @@
   <!-- Innloggingsskjerm -->
   <section id="login" hidden>
     <form id="login-form">
-      <h2>Logg inn</h2>
+      <h2 id="login-title">Logg inn</h2>
       <label>Brukernavn
         <input id="username" type="text" autocomplete="username" autocapitalize="none" required>
       </label>
       <label>Passord
         <input id="password" type="password" autocomplete="current-password" required>
       </label>
+      <!-- Bare når man lager ny bruker -->
+      <label id="repeat-label" hidden>Gjenta passord
+        <input id="password-repeat" type="password" autocomplete="new-password">
+      </label>
       <p id="login-error" class="error" hidden></p>
-      <button type="submit" class="primary">Logg inn</button>
-      <button type="button" id="signup">Lag ny bruker</button>
+      <!-- Grønn hovedknapp: "Logg inn" eller "Lag ny bruker" -->
+      <button type="submit" id="login-submit" class="primary">Logg inn</button>
+      <!-- Bytter mellom å logge inn og å lage ny bruker -->
+      <button type="button" id="login-switch">Lag ny bruker</button>
     </form>
   </section>
 

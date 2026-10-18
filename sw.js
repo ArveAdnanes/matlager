@@ -2,7 +2,7 @@
 // og kan startes uten nett. Varene håndteres av Firebase, ikke her.
 
 // Bytt nummeret hvis du vil tvinge alle til å hente filene på nytt
-const CACHE = "matlager-v1";
+const CACHE = "matlager-v2";
 
 const APP_FILES = [
   "./",
@@ -17,7 +17,9 @@ const APP_FILES = [
 
 // Første gang: lagre appens filer
 self.addEventListener("install", (event) => {
-  event.waitUntil(caches.open(CACHE).then((cache) => cache.addAll(APP_FILES)));
+  // "reload" = hent ferske filer fra GitHub, ikke nettleserens gamle kopi
+  const fresh = APP_FILES.map((file) => new Request(file, { cache: "reload" }));
+  event.waitUntil(caches.open(CACHE).then((cache) => cache.addAll(fresh)));
   self.skipWaiting();
 });
 
@@ -37,9 +39,11 @@ self.addEventListener("fetch", (event) => {
   const url = new URL(request.url);
 
   if (url.origin === location.origin) {
-    // Appens egne filer: hent nyeste fra nettet, bruk lagret kopi uten nett
+    // Appens egne filer: hent nyeste fra nettet, bruk lagret kopi uten nett.
+    // "no-cache" = spør alltid GitHub om det finnes en nyere versjon, i stedet
+    // for å bruke nettleserens egen kopi (GitHub ber den huske filer i 10 min).
     event.respondWith(
-      fetch(request)
+      fetch(request, { cache: "no-cache" })
         .then((response) => saveCopy(request, response))
         .catch(() => caches.match(request))
     );

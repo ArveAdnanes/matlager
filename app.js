@@ -150,7 +150,11 @@ const loginForm = document.getElementById("login-form");
 const usernameInput = document.getElementById("username");
 const passwordInput = document.getElementById("password");
 const loginError = document.getElementById("login-error");
-const signupBtn = document.getElementById("signup");
+const loginTitle = document.getElementById("login-title");
+const repeatLabel = document.getElementById("repeat-label");
+const passwordRepeatInput = document.getElementById("password-repeat");
+const loginSubmit = document.getElementById("login-submit");
+const loginSwitch = document.getElementById("login-switch");
 const appSection = document.getElementById("app");
 const userLabel = document.getElementById("user-label");
 const logoutBtn = document.getElementById("logout");
@@ -1034,27 +1038,51 @@ function authErrorMessage(error) {
   }
 }
 
-// Logg inn
+// Innloggingsskjermen har to moduser: "Logg inn" og "Lag ny bruker"
+let signupMode = false;
+
+function setSignupMode(on) {
+  signupMode = on;
+  loginTitle.textContent = on ? "Lag ny bruker" : "Logg inn";
+  loginSubmit.textContent = on ? "Lag ny bruker" : "Logg inn";
+  loginSwitch.textContent = on ? "Jeg har allerede en bruker" : "Lag ny bruker";
+  repeatLabel.hidden = !on;
+  passwordRepeatInput.required = on;
+  // Hjelper nettleserens passordlagring å forstå om passordet er nytt
+  passwordInput.autocomplete = on ? "new-password" : "current-password";
+  loginError.hidden = true;
+}
+
+// Bytt mellom "Logg inn" og "Lag ny bruker"
+loginSwitch.addEventListener("click", () => {
+  setSignupMode(!signupMode);
+  usernameInput.focus();
+});
+
+// Grønn knapp (eller Enter): logg inn, eller lag ny bruker
 loginForm.addEventListener("submit", (event) => {
   event.preventDefault();
   loginError.hidden = true;
   const credentials = readCredentials();
   if (!credentials) return;
 
-  signIn(credentials.username, credentials.password)
-    .then(() => loginForm.reset())
-    .catch((error) => showLoginError(authErrorMessage(error)));
-});
-
-// Lag ny bruker (logger inn automatisk etterpå)
-signupBtn.addEventListener("click", () => {
-  loginError.hidden = true;
-  const credentials = readCredentials();
-  if (!credentials) return;
-
-  signUp(credentials.username, credentials.password)
-    .then(() => loginForm.reset())
-    .catch((error) => showLoginError(authErrorMessage(error)));
+  if (signupMode) {
+    if (passwordRepeatInput.value !== credentials.password) {
+      showLoginError("Passordene er ikke like.");
+      return;
+    }
+    // Lag ny bruker (logger inn automatisk etterpå)
+    signUp(credentials.username, credentials.password)
+      .then(() => {
+        loginForm.reset();
+        setSignupMode(false);
+      })
+      .catch((error) => showLoginError(authErrorMessage(error)));
+  } else {
+    signIn(credentials.username, credentials.password)
+      .then(() => loginForm.reset())
+      .catch((error) => showLoginError(authErrorMessage(error)));
+  }
 });
 
 // Logg ut
