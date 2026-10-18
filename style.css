@@ -1,5 +1,6 @@
 /* Farger samlet ett sted, så de er lette å endre */
 :root {
+  color-scheme: light;
   --bg: #f4f6f4;
   --card: #ffffff;
   --text: #1f2a24;
@@ -9,12 +10,18 @@
   --danger: #c0392b;
   --warn: #d69e2e;
   --warn-text: #8a6100; /* mørkere gul, lettere å lese som tekst */
+
+  /* Lagringsstedene – fargene fra hyllene i logoen */
+  --fryser: #2b7fb8;
+  --kjoleskap: #2f7d5b;
+  --torrvarer: #e8b04a; /* samme gul som logoen – får mørk tekst (se under) */
 }
 
-/* Mørk modus: samme variabler, mørke farger. Slår seg på automatisk
-   når mobilen/PC-en står på mørkt tema. */
+/* Mørk modus: samme variabler, mørke farger.
+   Brukes når enheten står på mørkt tema (med mindre "Lys" er valgt i menyen),
+   eller når "Mørk" er valgt i menyen. */
 @media (prefers-color-scheme: dark) {
-  :root {
+  :root:not([data-theme="light"]) {
     color-scheme: dark;
     --bg: #141a17;
     --card: #1e2622;
@@ -26,6 +33,19 @@
     --warn: #ecc94b;
     --warn-text: #ecc94b;
   }
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #141a17;
+  --card: #1e2622;
+  --text: #e6ece8;
+  --muted: #93a39a;
+  --accent: #3f9d74;
+  --border: #2f3a34;
+  --danger: #e5675a;
+  --warn: #ecc94b;
+  --warn-text: #ecc94b;
 }
 
 * {
@@ -44,47 +64,200 @@ body {
   color: var(--text);
 }
 
-/* Innholdet er maks 600px bredt og sentrert – fint på både mobil og PC */
-header,
+/* Innholdet er sentrert. På mobil maks 600px – på PC blir det bredere (se nederst) */
+.topbar-inner,
 #login,
-.search,
-.expiring,
-.tabs,
-main {
+.layout {
   max-width: 600px;
   margin: 0 auto;
   padding: 0 16px;
 }
 
-/* Tittel til venstre, bruker + Logg ut til høyre */
-header {
+/* ---------- Oppsett på mobil: én kolonne ---------- */
+.layout {
   display: flex;
-  flex-wrap: wrap;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* Sidekolonnen "forsvinner" på mobil, så innholdet kan sorteres fritt */
+.side {
+  display: contents;
+}
+
+/* Rekkefølge på mobil: søk, utløp, faner, legg til, liste */
+.search { order: 1; }
+.expiring { order: 2; }
+.tabs { order: 3; }
+.add-open { order: 4; }
+.list-area { order: 5; }
+
+/* ---------- Topplinje ---------- */
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  margin-bottom: 16px;
+  padding-top: env(safe-area-inset-top, 0px); /* plass til klokka/kamera på mobil */
+  background: var(--card);
+  border-bottom: 1px solid var(--border);
+}
+
+.topbar-inner {
+  display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 8px;
+  min-height: 60px;
 }
 
-h1 {
-  margin: 24px 0 16px;
-  font-size: 1.6rem;
+/* Logo + navn */
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--text);
+  font-size: 1.25rem;
+  font-weight: 700;
+  text-decoration: none;
 }
 
-.user-bar {
+.brand img {
+  width: 32px;
+  height: 32px;
+}
+
+.topbar-actions {
   display: flex;
   align-items: center;
   gap: 8px;
+}
+
+/* Tema-bryter: tre knapper i en avrundet "pille", valgt knapp er uthevet */
+.theme-switch {
+  display: flex;
+  gap: 2px;
+  padding: 3px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--bg);
+}
+
+.theme-switch button {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
   color: var(--muted);
+  cursor: pointer;
+}
+
+.theme-switch button svg {
+  width: 18px;
+  height: 18px;
+}
+
+.theme-switch button[aria-pressed="true"] {
+  background: var(--card);
+  color: var(--text);
+  box-shadow: 0 1px 3px rgb(0 0 0 / 0.2);
+}
+
+/* ---------- Konto-meny (øverst til høyre) ---------- */
+.menu {
+  position: relative;
+}
+
+/* Kontoknapp: (A) arve ▾ – brukernavnet vises bare på PC */
+.account-button {
+  list-style: none; /* skjul standard-pilen */
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 38px;
+  padding: 0 10px 0 4px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--bg);
+  color: var(--text);
+  cursor: pointer;
+  user-select: none;
+}
+
+/* Rund med forbokstaven i brukernavnet */
+.avatar {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: var(--border);
+  color: var(--text);
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+.account-name {
+  display: none;
   font-size: 0.9rem;
 }
 
-.user-bar button {
-  padding: 6px 10px;
+.chevron {
+  width: 14px;
+  height: 14px;
+  color: var(--muted);
+  transition: transform 0.15s;
+}
+
+/* Pilen peker opp når menyen er åpen */
+.menu[open] .chevron {
+  transform: rotate(180deg);
+}
+
+.menu-user {
+  margin: 0;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--border);
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+.menu-user strong {
+  color: var(--text);
+}
+
+.menu summary::-webkit-details-marker {
+  display: none;
+}
+
+.menu-panel {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 6px);
+  z-index: 5;
+  width: 220px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  box-shadow: 0 6px 20px rgb(0 0 0 / 0.15);
+}
+
+.menu-panel button {
+  padding: 10px;
   border: 1px solid var(--border);
   border-radius: 8px;
-  background: var(--card);
+  background: var(--bg);
   color: var(--text);
   font: inherit;
+  text-align: left;
   cursor: pointer;
 }
 
@@ -121,15 +294,63 @@ h1 {
   color: var(--danger);
 }
 
-/* ---------- Søk ---------- */
+/* ---------- Søk: avrundet felt med forstørrelsesglass ---------- */
+.search {
+  position: relative;
+  display: block;
+}
+
+.search-icon {
+  position: absolute;
+  left: 14px;
+  top: 50%;
+  width: 20px;
+  height: 20px;
+  transform: translateY(-50%);
+  color: var(--muted);
+  pointer-events: none; /* klikk går gjennom til feltet */
+}
+
 .search input {
   width: 100%;
-  margin-bottom: 12px;
+  padding: 12px 16px 12px 44px; /* plass til ikonet til venstre */
+  border-radius: 999px;
+}
+
+/* Egen ✕ til høyre – skjul nettleserens innebygde */
+.search input::-webkit-search-cancel-button {
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.search input {
+  padding-right: 48px;
+}
+
+.search-clear {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: var(--bg);
+  color: var(--muted);
+  transform: translateY(-50%);
+  cursor: pointer;
+}
+
+.search input:focus {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
 }
 
 /* ---------- Går snart ut ---------- */
 .expiring details {
-  margin-bottom: 12px;
   padding: 10px 12px;
   background: var(--card);
   border: 1px solid var(--border);
@@ -197,8 +418,36 @@ h1 {
   gap: 8px;
 }
 
+/* Hvert sted har sin farge (--loc), brukt i faner og stedknapper */
+[data-location="fryser"],
+[data-add-location="fryser"] { --loc: var(--fryser); }
+[data-location="kjoleskap"],
+[data-add-location="kjoleskap"] { --loc: var(--kjoleskap); }
+[data-location="torrvarer"],
+[data-add-location="torrvarer"] {
+  --loc: var(--torrvarer);
+  --loc-text: #1f2a24; /* mørk tekst – hvit er vanskelig å lese på lys gul */
+}
+
+.loc-icon {
+  display: inline-flex;
+  flex-shrink: 0;
+  width: 16px;
+  height: 16px;
+  color: var(--muted); /* grå – bare valgt fane har farge */
+}
+
+.loc-icon svg {
+  width: 100%;
+  height: 100%;
+}
+
 .tab {
   flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
   padding: 10px 4px;
   border: 1px solid var(--border);
   border-radius: 8px;
@@ -214,9 +463,13 @@ h1 {
 }
 
 .tab.active {
-  background: var(--accent);
-  border-color: var(--accent);
-  color: #fff;
+  background: var(--loc);
+  border-color: var(--loc);
+  color: var(--loc-text, #fff);
+}
+
+.tab.active .loc-icon {
+  color: var(--loc-text, #fff);
 }
 
 /* Under søk er ingen fane valgt – søket gjelder alle */
@@ -226,22 +479,189 @@ h1 {
   color: var(--text);
 }
 
-.searching #list {
-  margin-top: 16px;
+.searching .tab.active .loc-icon {
+  color: var(--muted);
 }
 
-/* ---------- Skjema ---------- */
+/* ---------- Legg til vare ---------- */
+/* Mobil: knappen som åpner vinduet (skjult på PC) */
+.add-open {
+  width: 100%;
+  padding: 12px 16px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--card);
+  color: var(--accent);
+  font: inherit;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+}
+
+/* Overskrift + lukkeknapp */
+.add-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.add-header h2 {
+  margin: 0;
+  font-size: 1.1rem;
+}
+
+.close-button {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: var(--bg);
+  color: var(--text);
+  font-size: 1rem;
+  cursor: pointer;
+}
+
+/* Skjemaet: én kolonne – sted, vare, antall/enhet, ekstra, knapp */
 #add-form {
   display: flex;
-  flex-wrap: wrap;
-  align-items: flex-end; /* feltene står på linje selv om datofeltet har overskrift */
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* Antall og enhet på samme linje */
+.add-row {
+  display: flex;
   gap: 8px;
-  margin: 16px 0;
+}
+
+.add-row input,
+.add-row select {
+  flex: 1;
+  min-width: 0;
+}
+
+/* "+ Utløpsdato" og "+ Notat": små, stiplede knapper */
+.add-extras {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.extra-toggle {
+  padding: 6px 12px;
+  border: 1px dashed var(--border);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--muted);
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+
+/* Dato-knappen med egen ✕ ved siden av */
+.date-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.clear-date {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: var(--bg);
+  color: var(--muted);
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+
+/* Åpen ("− Notat"): heltrukket kant */
+.extra-toggle.open {
+  border-style: solid;
+  color: var(--text);
+}
+
+/* Har innhold ("Går ut 25. okt. ✕", "Notat ✓"): grønn kant */
+.extra-toggle.has-value {
+  border-style: solid;
+  border-color: var(--accent);
+  color: var(--text);
+}
+
+/* Hurtigknapper + "Velg dato…" */
+.date-section {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.date-section input {
+  flex: 1 1 100%;
+}
+
+textarea {
+  resize: vertical;
+}
+
+/* "✓ Kjøttdeig lagt til i Fryser" */
+.add-confirm {
+  flex: 1 1 100%;
+  margin: 0;
+  color: var(--accent);
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+/* Mobil: vindu som glir opp fra bunnen av skjermen */
+@media (max-width: 899px) {
+  .add-card {
+    width: 100%;
+    max-width: 100%;
+    max-height: 90vh;
+    margin: auto 0 0; /* legger seg nederst */
+    padding: 16px 16px calc(16px + env(safe-area-inset-bottom, 0px));
+    border: none;
+    border-radius: 16px 16px 0 0;
+    overflow-y: auto;
+  }
+
+  .add-card[open] {
+    animation: slide-up 0.2s ease-out;
+  }
+}
+
+@keyframes slide-up {
+  from { transform: translateY(100%); }
+  to { transform: none; }
+}
+
+/* Hvert felt har en liten overskrift over seg */
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+
+.field input,
+.field select {
+  width: 100%;
 }
 
 /* Felles stil for alle felt og skjemaknapper (også i redigeringsvinduet) */
 input,
 select,
+textarea,
 form button {
   padding: 10px;
   border: 1px solid var(--border);
@@ -252,30 +672,62 @@ form button {
   color: var(--text);
 }
 
-#name {
-  flex: 1 1 100%; /* Navnefeltet får hele bredden */
-}
-
-#quantity {
-  flex: 1 1 70px;
-  min-width: 0;
-}
-
-#unit {
-  flex: 1 1 70px;
-}
-
-.date-field {
-  flex: 2 1 160px;
+/* Velg sted: tre like brede knapper, den valgte er grønn */
+.location-picker {
   display: flex;
-  flex-direction: column;
   gap: 4px;
-  color: var(--muted);
-  font-size: 0.8rem;
+  padding: 3px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg);
 }
 
-#add-form button {
-  flex: 1 1 100%; /* Legg til-knappen får hele bredden */
+.location-picker button {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  padding: 8px 4px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--text);
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+
+.location-picker button[aria-pressed="true"] {
+  background: var(--loc);
+  color: var(--loc-text, #fff);
+  font-weight: 600;
+}
+
+/* Hurtigknapper for utløpsdato: +3 dager, +1 uke … */
+.date-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.date-chips button,
+.pick-date {
+  padding: 5px 10px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--bg);
+  color: var(--text);
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.date-chips button:hover {
+  border-color: var(--accent);
+}
+
+#add-form button[type="submit"] {
+  margin-top: 4px;
+  font-weight: 600;
   background: var(--accent);
   border-color: var(--accent);
   color: #fff;
@@ -283,34 +735,112 @@ form button {
 }
 
 /* ---------- Liste ---------- */
+/* "Sorter"-menyen over listen, til høyre */
+.list-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+/* "3 treff i alle steder" */
+.search-info {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+/* Sorteringen står alltid helt til høyre */
+.list-toolbar select {
+  margin-left: auto;
+}
+
+/* Diskret: ser ut som tekst, ikke som et felt */
+.list-toolbar select {
+  padding: 4px 2px;
+  border: none;
+  background: transparent;
+  color: var(--muted);
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
 #list {
   list-style: none;
   margin: 0;
   padding: 0;
 }
 
+/* Ytre lag: rødt felt med søppelbøtte, synlig bare mens man sveiper */
+.swipe-row {
+  position: relative;
+  margin-bottom: 8px;
+  border-radius: 8px;
+  overflow: hidden; /* raden som sveipes, glir ikke utenfor listen */
+}
+
+.swipe-row.swiping {
+  background: var(--danger);
+}
+
+.swipe-delete {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding-right: 20px;
+  color: #fff;
+  visibility: hidden;
+}
+
+.swipe-row.swiping .swipe-delete {
+  visibility: visible;
+}
+
+.swipe-delete svg {
+  width: 22px;
+  height: 22px;
+}
+
+/* Selve raden – hele raden kan trykkes for å redigere */
 .item {
+  position: relative; /* ligger oppå det røde feltet */
   display: flex;
   align-items: center;
   gap: 8px;
   padding: 10px 12px;
-  margin-bottom: 8px;
+  touch-action: pan-y; /* nettleseren tar bla opp/ned, appen tar sveip sidelengs */
   background: var(--card);
   border: 1px solid var(--border);
   border-radius: 8px;
+  cursor: pointer;
 }
 
-/* Navn + infolinje under – trykk her for å redigere */
+.item:hover {
+  border-color: var(--muted);
+}
+
+/* Navn + infolinje under */
 .item-info {
   flex: 1;
   display: flex;
   flex-direction: column;
   min-width: 0;
-  cursor: pointer;
 }
 
 .item-name {
   overflow-wrap: anywhere;
+}
+
+/* Notat under navnet: én linje, kuttes med … */
+.item-note {
+  overflow: hidden;
+  color: var(--muted);
+  font-size: 0.8rem;
+  font-style: italic;
+  white-space: nowrap;
+  text-overflow: ellipsis;
 }
 
 .item-meta {
@@ -331,28 +861,92 @@ form button {
   color: var(--danger);
 }
 
+/* Antallet – trykk for å skrive inn et nytt tall */
 .item-qty {
   min-width: 70px;
+  padding: 6px 2px;
+  border-radius: 6px;
   text-align: center;
   font-variant-numeric: tabular-nums;
-}
-
-.item button {
-  width: 36px;
-  height: 36px;
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  background: var(--bg);
-  color: var(--text);
-  font-size: 1.2rem;
   cursor: pointer;
 }
 
+.item-qty:hover {
+  background: var(--bg);
+}
+
+/* Uten antall: vis et svakt "antall" så man ser at det kan trykkes */
+.item-qty:empty::after {
+  content: "antall";
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+
+.qty-input {
+  width: 70px;
+  padding: 6px;
+  text-align: center;
+}
+
+/* – og +: 44px er anbefalt minstestørrelse for fingre */
+.item button {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--bg);
+  color: var(--text);
+  cursor: pointer;
+}
+
+.item button svg {
+  width: 18px;
+  height: 18px;
+}
+
+/* Søppelbøtta: usynlig til man holder musepekeren over raden (PC).
+   På mobil skjules den helt – der sveiper man i stedet. */
 .item .delete {
+  border-color: transparent;
+  background: transparent;
   color: var(--danger);
 }
 
+@media (hover: hover) {
+  .item .delete {
+    opacity: 0;
+    transition: opacity 0.15s;
+  }
+
+  .item:hover .delete,
+  .item .delete:focus-visible {
+    opacity: 1;
+  }
+}
+
+@media (hover: none) {
+  .item .delete {
+    display: none;
+  }
+}
+
+/* Nylig lagt til: lyser kort opp */
+.item.just-added {
+  animation: just-added 1.6s ease-out;
+}
+
+@keyframes just-added {
+  from {
+    border-color: var(--accent);
+    box-shadow: inset 0 0 0 2px var(--accent);
+  }
+}
+
 .empty {
+  padding: 24px 8px;
   color: var(--muted);
   text-align: center;
 }
@@ -376,13 +970,14 @@ dialog h2 {
   font-size: 1.2rem;
 }
 
-#edit-form {
+/* Felles for redigeringsvinduet og bytt passord-vinduet */
+.dialog-form {
   display: flex;
   flex-direction: column;
   gap: 12px;
 }
 
-#edit-form label {
+.dialog-form label {
   display: flex;
   flex-direction: column;
   gap: 4px;
@@ -416,4 +1011,128 @@ dialog h2 {
   background: var(--accent);
   border-color: var(--accent);
   color: #fff;
+}
+
+/* ---------- Melding nederst ("… ble slettet – Angre") ---------- */
+.toast {
+  position: fixed;
+  left: 50%;
+  bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+  transform: translateX(-50%);
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: max-content;
+  max-width: calc(100% - 32px);
+  padding: 10px 10px 10px 16px;
+  background: var(--text);
+  color: var(--bg);
+  border-radius: 10px;
+  box-shadow: 0 4px 16px rgb(0 0 0 / 0.25);
+}
+
+.toast button {
+  padding: 6px 10px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-weight: 700;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+/* Plass nederst så meldingen ikke dekker den siste varen */
+.list-area {
+  padding-bottom: 80px;
+}
+
+/* ---------- PC / bred skjerm: to kolonner ---------- */
+@media (min-width: 900px) {
+  .topbar-inner,
+  .layout {
+    max-width: 1100px;
+    padding: 0 24px;
+  }
+
+  /* Venstre: legg til + utløp. Høyre: søk, faner og liste */
+  .layout {
+    display: grid;
+    grid-template-columns: 360px minmax(0, 1fr);
+    grid-template-rows: auto auto 1fr;
+    grid-template-areas:
+      "side search"
+      "side tabs"
+      "side list";
+    column-gap: 28px;
+    row-gap: 12px;
+    align-items: start;
+  }
+
+  .search { grid-area: search; }
+  .tabs { grid-area: tabs; }
+  .list-area { grid-area: list; }
+
+  /* Brukernavnet ved siden av forbokstaven når det er plass */
+  .account-name {
+    display: inline;
+  }
+
+  /* PC: "Legg til" ligger fast i kolonnen – ingen åpne-/lukkeknapp */
+  .add-open,
+  .add-header .close-button {
+    display: none;
+  }
+
+  .add-card {
+    position: static;
+    width: auto;
+    max-width: none;
+    margin: 0;
+    padding: 14px;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+  }
+
+  /* I sidekolonnen: "Legg til" øverst, utløp under */
+  .add-card { order: 1; }
+  .expiring { order: 2; }
+
+  /* Sidekolonnen blir en ekte kolonne som blir liggende når man blar */
+  .side {
+    grid-area: side;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    position: sticky;
+    top: 16px;
+  }
+}
+
+/* ---------- Slett vare (i redigeringsvinduet) ---------- */
+.delete-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border-color: var(--border);
+  background: transparent;
+  color: var(--danger);
+  cursor: pointer;
+}
+
+.delete-button svg {
+  width: 18px;
+  height: 18px;
+}
+
+/* ---------- Uten nett ---------- */
+.offline-banner {
+  padding: 6px 16px;
+  background: var(--warn);
+  color: #1f2a24;
+  font-size: 0.85rem;
+  text-align: center;
 }

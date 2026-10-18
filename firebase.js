@@ -8,6 +8,9 @@ import {
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
   signOut,
+  EmailAuthProvider,
+  reauthenticateWithCredential,
+  updatePassword,
 } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-auth.js";
 import {
   initializeFirestore,
@@ -16,7 +19,6 @@ import {
   collection,
   doc,
   onSnapshot,
-  addDoc,
   setDoc,
   updateDoc,
   deleteDoc,
@@ -63,6 +65,14 @@ export function logOut() {
   return signOut(auth);
 }
 
+// Bytt passord. Firebase krever at man bekrefter nåværende passord først.
+export async function changePassword(currentPassword, newPassword) {
+  const user = auth.currentUser;
+  const credential = EmailAuthProvider.credential(user.email, currentPassword);
+  await reauthenticateWithCredential(user, credential);
+  await updatePassword(user, newPassword);
+}
+
 // Kaller callback(user) ved innlogging og callback(null) ved utlogging
 export function watchUser(callback) {
   return onAuthStateChanged(auth, callback);
@@ -88,8 +98,12 @@ export function watchItems(callback, onError) {
   );
 }
 
+// Legg til en vare. Id-en lages med en gang (før lagringen er ferdig),
+// så appen kan lyse opp den nye varen i listen.
+// Returnerer { id, saved } – saved er et løfte som feiler hvis lagringen feiler.
 export function addItem(item) {
-  return addDoc(itemsRef(), item);
+  const ref = doc(itemsRef());
+  return { id: ref.id, saved: setDoc(ref, item) };
 }
 
 export function updateItem(id, changes) {
@@ -100,9 +114,34 @@ export function deleteItem(id) {
   return deleteDoc(doc(itemsRef(), id));
 }
 
-// Brukes ved flytting av gamle varer: beholder samme id, så samme vare
-// ikke kan bli lagt inn to ganger
+// Legger inn en vare med en bestemt id. Brukes ved flytting av gamle varer
+// og ved "Angre" etter sletting, så varen får tilbake samme id.
 export function importItem(item) {
   const { id, ...data } = item;
   return setDoc(doc(itemsRef(), id), data);
+}
+
+// ---------- Navnehistorikk (husker enheten for varer du har hatt før) ----------
+
+// Varer du har lagt inn før – blir liggende selv om varen slettes.
+// Ligger i users/{brukerId}/history, én per varenavn.
+function historyRef() {
+  return collection(db, "users", auth.currentUser.uid, "history");
+}
+
+// Husk navn, enhet og lagringssted for en vare
+export function rememberName(item) {
+  const key = item.name.toLowerCase().replace(/\//g, "_"); // "/" er ikke lov i id
+  return setDoc(doc(historyRef(), key), {
+    name: item.name,
+    unit: item.unit || "",
+    location: item.location,
+  });
+}
+
+// Kaller callback(historikk) nå og hver gang den endres
+export function watchHistory(callback) {
+  return onSnapshot(historyRef(), (snapshot) => {
+    callback(snapshot.docs.map((d) => d.data()));
+  });
 }

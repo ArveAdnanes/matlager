@@ -17,14 +17,68 @@
   <!-- Farge på statuslinjen på mobil – samme som bakgrunnen i lys/mørk modus -->
   <meta name="theme-color" content="#f4f6f4" media="(prefers-color-scheme: light)">
   <meta name="theme-color" content="#141a17" media="(prefers-color-scheme: dark)">
+
+  <!-- Sett valgt tema (lys/mørk) før siden tegnes, så den ikke blinker -->
+  <script>
+    try {
+      const theme = localStorage.getItem("matlager-theme");
+      if (theme === "light" || theme === "dark") document.documentElement.dataset.theme = theme;
+    } catch {}
+  </script>
 </head>
 <body>
-  <header>
-    <h1>Matlager</h1>
-    <!-- Vises når man er innlogget -->
-    <div id="user-bar" class="user-bar" hidden>
-      <span id="user-label"></span>
-      <button id="logout" type="button">Logg ut</button>
+  <!-- Topplinje: logo til venstre, tema og meny til høyre -->
+  <header class="topbar">
+    <div class="topbar-inner">
+      <a class="brand" href="./">
+        <img src="icons/icon.svg" alt="" width="32" height="32">
+        <span>Matlager</span>
+      </a>
+
+      <div class="topbar-actions">
+        <!-- Tema: Lys / Auto (følg enheten) / Mørk -->
+        <div class="theme-switch" role="group" aria-label="Tema">
+          <button type="button" data-theme-choice="light" title="Lyst tema" aria-label="Lyst tema">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <circle cx="12" cy="12" r="4.5" fill="currentColor"/>
+              <g stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                <path d="M12 2v2.5M12 19.5V22M2 12h2.5M19.5 12H22M4.9 4.9l1.8 1.8M17.3 17.3l1.8 1.8M4.9 19.1l1.8-1.8M17.3 6.7l1.8-1.8"/>
+              </g>
+            </svg>
+          </button>
+          <button type="button" data-theme-choice="auto" title="Auto" aria-label="Følg enhetens tema">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <circle cx="12" cy="12" r="8" fill="none" stroke="currentColor" stroke-width="2"/>
+              <path d="M12 4a8 8 0 0 1 0 16z" fill="currentColor"/>
+            </svg>
+          </button>
+          <button type="button" data-theme-choice="dark" title="Mørkt tema" aria-label="Mørkt tema">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z" fill="currentColor"/>
+            </svg>
+          </button>
+        </div>
+
+        <!-- Konto: rund knapp med forbokstav. Åpner meny (når innlogget) -->
+        <details id="menu" class="menu" hidden>
+          <summary class="account-button" aria-label="Konto" title="Konto">
+            <span id="user-initial" class="avatar"></span>
+            <span id="user-name" class="account-name"></span>
+            <svg class="chevron" viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M6 9l6 6 6-6" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </summary>
+          <div class="menu-panel">
+            <p class="menu-user">Innlogget som <strong id="user-label"></strong></p>
+            <button id="change-password" type="button">Bytt passord</button>
+            <button id="logout" type="button">Logg ut</button>
+          </div>
+        </details>
+      </div>
+    </div>
+    <!-- Vises når enheten er uten nett -->
+    <div id="offline" class="offline-banner" role="status" hidden>
+      Uten nett – endringene lagres og sendes når du er tilkoblet igjen
     </div>
   </header>
 
@@ -48,61 +102,127 @@
   </section>
 
   <!-- Selve appen – vises når man er innlogget -->
-  <div id="app" hidden>
+  <!-- På mobil: én kolonne. På PC: "Legg til" + utløp til venstre, liste til høyre -->
+  <div id="app" class="layout" hidden>
 
-  <!-- Søk i alle lagringssteder -->
-  <div class="search">
-    <input id="search" type="search" placeholder="Søk i alle varer">
-  </div>
+    <!-- Søk i alle lagringssteder -->
+    <label class="search">
+      <svg class="search-icon" viewBox="0 0 24 24" aria-hidden="true">
+        <circle cx="10.5" cy="10.5" r="6.5" fill="none" stroke="currentColor" stroke-width="2"/>
+        <path d="M15.5 15.5 L21 21" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+      </svg>
+      <input id="search" type="search" placeholder="Søk i alle varer …" aria-label="Søk i alle varer" autocomplete="off">
+      <button id="search-clear" class="search-clear" type="button" aria-label="Tøm søket" hidden>✕</button>
+    </label>
 
-  <!-- Varer som går ut snart, fra alle lagringssteder. Fylles av app.js -->
-  <section id="expiring" class="expiring" hidden>
-    <details open>
-      <summary>Utløpsdato <span id="expiring-count"></span></summary>
-      <ul id="expiring-list"></ul>
-    </details>
-  </section>
+    <!-- Faner: hvilket lagringssted vi ser på -->
+    <nav class="tabs">
+      <button class="tab active" data-location="fryser"><span class="loc-icon" data-location-icon="fryser"></span>Fryser <span class="count"></span></button>
+      <button class="tab" data-location="kjoleskap"><span class="loc-icon" data-location-icon="kjoleskap"></span>Kjøleskap <span class="count"></span></button>
+      <button class="tab" data-location="torrvarer"><span class="loc-icon" data-location-icon="torrvarer"></span>Tørrvarer <span class="count"></span></button>
+    </nav>
 
-  <!-- Faner: hvilket lagringssted vi ser på -->
-  <nav class="tabs">
-    <button class="tab active" data-location="fryser">Fryser <span class="count"></span></button>
-    <button class="tab" data-location="kjoleskap">Kjøleskap <span class="count"></span></button>
-    <button class="tab" data-location="torrvarer">Tørrvarer <span class="count"></span></button>
-  </nav>
+    <!-- Sidekolonne på PC. På mobil "forsvinner" den (display: contents),
+         så innholdet legger seg i riktig rekkefølge mellom de andre delene -->
+    <aside class="side">
 
-  <main>
-    <!-- Skjema for å legge til en ny vare i valgt fane -->
-    <form id="add-form">
-      <input id="name" type="text" placeholder="Vare, f.eks. Kjøttdeig" required>
-      <input id="quantity" type="number" min="0" step="any" placeholder="Antall">
-      <select id="unit">
-        <option value="">–</option>
-        <option>stk</option>
-        <option>pk</option>
-        <option>g</option>
-        <option>kg</option>
-        <option>dl</option>
-        <option>l</option>
-      </select>
-      <label class="date-field">Utløpsdato (valgfritt)
-        <input id="expires" type="date">
-      </label>
-      <button type="submit">Legg til</button>
-    </form>
+      <!-- Mobil: knapp som åpner "Legg til"-vinduet (skjult på PC) -->
+      <button id="add-open" class="add-open" type="button">+ Legg til vare</button>
+
+      <!-- "Legg til vare". Mobil: vindu som glir opp fra bunnen.
+           PC: ligger alltid åpent her i venstre kolonne. -->
+      <dialog id="add-card" class="add-card">
+        <div class="add-header">
+          <h2>Legg til vare</h2>
+          <button id="add-close" class="close-button" type="button" aria-label="Lukk">✕</button>
+        </div>
+        <form id="add-form">
+          <!-- Hvor varen skal ligge. Følger fanen, men kan endres her -->
+          <div class="location-picker" role="group" aria-label="Sted">
+            <button type="button" data-add-location="fryser">Fryser</button>
+            <button type="button" data-add-location="kjoleskap">Kjøleskap</button>
+            <button type="button" data-add-location="torrvarer">Tørrvarer</button>
+          </div>
+
+          <!-- Det man nesten alltid fyller ut -->
+          <input id="name" type="text" placeholder="Vare, f.eks. Kjøttdeig" aria-label="Vare" autocomplete="off" autofocus required>
+          <div class="add-row">
+            <input id="quantity" type="number" min="0" step="any" inputmode="decimal" placeholder="Antall" aria-label="Antall">
+            <select id="unit" aria-label="Enhet">
+              <option value="">Enhet</option>
+              <option>stk</option>
+              <option>pk</option>
+              <option>g</option>
+              <option>kg</option>
+              <option>dl</option>
+              <option>l</option>
+            </select>
+          </div>
+
+          <!-- Det man av og til trenger: skjult bak små knapper -->
+          <div class="add-extras">
+            <span class="date-toggle">
+              <button type="button" id="show-date" class="extra-toggle">+ Utløpsdato</button>
+              <button type="button" id="clear-date" class="clear-date" aria-label="Fjern utløpsdato" title="Fjern utløpsdato" hidden>✕</button>
+            </span>
+            <button type="button" id="show-note" class="extra-toggle">+ Notat</button>
+          </div>
+
+          <!-- Utløpsdato: hurtigknapper, eller "Velg dato…" for kalenderen -->
+          <div id="date-section" class="date-section" hidden>
+            <div class="date-chips" data-for="expires" role="group" aria-label="Hurtigvalg for utløpsdato">
+              <button type="button" data-days="3">+3 dager</button>
+              <button type="button" data-days="7">+1 uke</button>
+              <button type="button" data-months="1">+1 mnd</button>
+              <button type="button" data-months="3">+3 mnd</button>
+            </div>
+            <button type="button" id="pick-date" class="pick-date">Velg dato…</button>
+            <input id="expires" type="date" aria-label="Utløpsdato" hidden>
+          </div>
+
+          <input id="note" type="text" placeholder="Notat, f.eks. hjemmelaget, 2 porsjoner" aria-label="Notat" autocomplete="off" hidden>
+
+          <!-- Bekreftelse etter at en vare er lagt til -->
+          <p id="add-confirm" class="add-confirm" role="status" hidden></p>
+          <button type="submit">Legg til</button>
+        </form>
+      </dialog>
+
+      <!-- Varer som går ut snart, fra alle lagringssteder. Fylles av app.js -->
+      <section id="expiring" class="expiring" hidden>
+        <!-- Lukket som standard – åpnes automatisk hvis noe har gått ut -->
+        <details>
+          <summary>Utløpsdato <span id="expiring-count"></span></summary>
+          <ul id="expiring-list"></ul>
+        </details>
+      </section>
+
+    </aside>
 
     <!-- Listen fylles av app.js -->
-    <ul id="list"></ul>
-    <p id="empty" class="empty">Ingen varer her ennå.</p>
-  </main>
+    <main class="list-area">
+      <!-- Sortering av listen -->
+      <div class="list-toolbar">
+        <!-- "3 treff i alle steder" når man søker -->
+        <p id="search-info" class="search-info" hidden></p>
+        <select id="sort" aria-label="Sorter">
+          <option value="expires">Sorter: Utløpsdato</option>
+          <option value="name">Sorter: Navn (A–Å)</option>
+          <option value="added">Sorter: Sist lagt til</option>
+        </select>
+      </div>
+      <ul id="list"></ul>
+      <p id="empty" class="empty">Ingen varer her ennå.</p>
+    </main>
 
   </div>
 
   <!-- Redigeringsvindu: åpnes når du trykker på en vare -->
   <dialog id="edit-dialog">
-    <form id="edit-form">
+    <form id="edit-form" class="dialog-form">
       <h2>Rediger vare</h2>
       <label>Navn
-        <input id="edit-name" type="text" required>
+        <input id="edit-name" type="text" autocomplete="off" required>
       </label>
       <div class="row">
         <label>Antall
@@ -130,12 +250,56 @@
       <label>Utløpsdato
         <input id="edit-expires" type="date">
       </label>
+      <!-- Hurtigvalg for utløpsdato (fra i dag) -->
+      <div class="date-chips" data-for="edit-expires" role="group" aria-label="Hurtigvalg for utløpsdato">
+        <button type="button" data-days="3">+3 dager</button>
+        <button type="button" data-days="7">+1 uke</button>
+        <button type="button" data-months="1">+1 mnd</button>
+        <button type="button" data-months="3">+3 mnd</button>
+      </div>
+      <label>Notat
+        <textarea id="edit-note" rows="2" placeholder="f.eks. hjemmelaget, 2 porsjoner" autocomplete="off"></textarea>
+      </label>
+      <!-- Slett ligger her i stedet for på hver rad -->
+      <button type="button" id="edit-delete" class="delete-button">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-12M9 7V4h6v3"/></g></svg>
+        Slett vare
+      </button>
       <div class="dialog-buttons">
         <button type="button" id="edit-cancel">Avbryt</button>
         <button type="submit" class="primary">Lagre</button>
       </div>
     </form>
   </dialog>
+
+  <!-- Bytt passord -->
+  <dialog id="password-dialog">
+    <form id="password-form" class="dialog-form">
+      <h2>Bytt passord</h2>
+      <!-- Skjult brukernavn, så nettleserens passordlagring vet hvilken konto det gjelder -->
+      <input id="password-username" type="text" autocomplete="username" hidden>
+      <label>Nåværende passord
+        <input id="current-password" type="password" autocomplete="current-password" required>
+      </label>
+      <label>Nytt passord (minst 6 tegn)
+        <input id="new-password" type="password" autocomplete="new-password" required>
+      </label>
+      <label>Gjenta nytt passord
+        <input id="repeat-password" type="password" autocomplete="new-password" required>
+      </label>
+      <p id="password-error" class="error" hidden></p>
+      <div class="dialog-buttons">
+        <button type="button" id="password-cancel">Avbryt</button>
+        <button type="submit" class="primary">Lagre</button>
+      </div>
+    </form>
+  </dialog>
+
+  <!-- Melding nederst, f.eks. "Kjøttdeig ble slettet – Angre" eller "… lagt til i Fryser – Vis" -->
+  <div id="toast" class="toast" role="status" hidden>
+    <span id="toast-text"></span>
+    <button id="toast-action" type="button"></button>
+  </div>
 
   <!-- type="module" gjør at app.js kan importere fra firebase.js -->
   <script type="module" src="app.js"></script>
