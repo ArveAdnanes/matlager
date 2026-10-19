@@ -704,13 +704,15 @@ form button {
 }
 
 /* Hurtigknapper for utløpsdato: +3 dager, +1 uke … */
-.date-chips {
+.date-chips,
+.category-chips {
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
 }
 
 .date-chips button,
+.category-chips button,
 .pick-date {
   padding: 5px 10px;
   border: 1px solid var(--border);
@@ -1135,4 +1137,697 @@ dialog h2 {
   color: #1f2a24;
   font-size: 0.85rem;
   text-align: center;
+}
+
+/* ---------- Kategorier ---------- */
+
+/* Valgt kategori i "Legg til" */
+.category-chips button[aria-pressed="true"] {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: #fff;
+}
+
+/* "+ Ny" (lag kategori) */
+.category-chips .new-chip {
+  border-style: dashed;
+  background: transparent;
+  color: var(--muted);
+}
+
+/* "+ Ny kategori" på sorteringslinjen */
+.text-button {
+  padding: 4px 2px;
+  border: none;
+  background: none;
+  color: var(--accent);
+  font: inherit;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+/* Overskrift i listen: [▾ NAVN antall] til venstre, ⋯ og + til høyre */
+.category-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: 16px 0 6px;
+}
+
+.category-heading:first-child {
+  margin-top: 0;
+}
+
+/* Pil + navn + antall – trykk for å lukke/åpne */
+.category-toggle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 4px 6px 0;
+  border: none;
+  background: none;
+  color: var(--muted);
+  font: inherit;
+  cursor: pointer;
+}
+
+.category-toggle:hover {
+  color: var(--text);
+}
+
+.category-toggle svg {
+  width: 16px;
+  height: 16px;
+  transition: transform 0.15s;
+}
+
+/* Lukket: pila peker mot høyre */
+.category-heading.closed .category-toggle svg {
+  transform: rotate(-90deg);
+}
+
+.category-name {
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.category-count {
+  font-size: 0.8rem;
+  opacity: 0.7;
+}
+
+.category-actions {
+  display: flex;
+  gap: 2px;
+}
+
+/* ⋯ og + */
+.category-icon {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+}
+
+.category-icon:hover {
+  background: var(--card);
+  color: var(--accent);
+}
+
+.category-icon svg {
+  width: 16px;
+  height: 16px;
+}
+
+/* Tom kategori: "Ingen varer ennå" */
+.category-empty {
+  margin-bottom: 8px;
+  padding: 10px 12px;
+  border: 1px dashed var(--border);
+  border-radius: 8px;
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+/* ---------- Hold inne og dra ---------- */
+
+/* Ikke marker tekst eller vis nettleserens meny når man holder inne */
+.item {
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+}
+
+/* Kopien som følger fingeren */
+.drag-ghost {
+  position: fixed;
+  z-index: 50;
+  margin: 0;
+  pointer-events: none; /* så vi kan se hva som ligger under */
+  box-shadow: 0 10px 30px rgb(0 0 0 / 0.25);
+  transform: scale(1.03);
+  opacity: 0.95;
+}
+
+/* Raden som flyttes: svak, så man ser hvor den kom fra */
+.drag-source {
+  opacity: 0.35;
+}
+
+body.dragging {
+  cursor: grabbing;
+}
+
+/* Kategorien man er over: overskriften og varene i den markeres */
+.category-heading.drop-zone {
+  border-radius: 8px;
+  background: rgb(63 157 116 / 0.15);
+  outline: 2px dashed var(--accent);
+}
+
+.swipe-row.drop-zone .item,
+.category-empty.drop-zone {
+  border-color: var(--accent);
+}
+
+/* Endre rekkefølge på kategorier: grønn strek der kategorien havner */
+.category-heading {
+  position: relative;
+}
+
+.category-heading.insert-before::before,
+#list.insert-at-end::after {
+  content: "";
+  display: block;
+  height: 3px;
+  border-radius: 2px;
+  background: var(--accent);
+}
+
+.category-heading.insert-before::before {
+  position: absolute;
+  top: -8px;
+  left: 0;
+  right: 0;
+}
+
+#list.insert-at-end::after {
+  margin-top: 8px;
+}
+
+/* Overskrift som kopi (mens man drar den) */
+.category-heading.drag-ghost {
+  position: fixed; /* overstyrer position: relative på overskriftene */
+  padding: 0 8px;
+  border-radius: 8px;
+  background: var(--card);
+}
+
+/* Overskrifter kan også holdes inne */
+.category-heading {
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+}
+
+/* ---------- Oppskrifter: "Hva kan jeg lage?" ---------- */
+
+/* Knappen i topplinjen: gryte (+ "Oppskrifter" på PC) */
+.recipes-open {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 38px;
+  padding: 0 9px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--bg);
+  color: var(--text);
+  font: inherit;
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+
+.recipes-open svg {
+  width: 20px;
+  height: 20px;
+}
+
+.recipes-open span {
+  display: none;
+}
+
+/* Valgt: grønn, som en valgt fane */
+.recipes-open[aria-pressed="true"] {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: #fff;
+}
+
+/* Smale mobiler: litt mindre tema-bryter, og bare logoen uten navn */
+@media (max-width: 430px) {
+  .topbar-actions {
+    gap: 6px;
+  }
+
+  .theme-switch button {
+    width: 28px;
+    height: 28px;
+  }
+}
+
+@media (max-width: 380px) {
+  .brand span {
+    display: none;
+  }
+}
+
+.recipes {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-width: 600px;
+  margin: 0 auto;
+  padding: 0 16px 80px;
+}
+
+/* ← Varer | Hva kan jeg lage? | (tom plass, så tittelen står i midten) */
+.recipes-header {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 8px;
+}
+
+.recipes-header .text-button {
+  justify-self: start;
+}
+
+.recipes-header h2 {
+  margin: 0;
+  font-size: 1.15rem;
+}
+
+/* "Bruk snart: Kyllingfilet, Melk" */
+.use-soon {
+  margin: 0;
+  padding: 10px 12px;
+  border-left: 4px solid var(--warn);
+  border-radius: 8px;
+  background: var(--card);
+  color: var(--warn-text);
+  font-size: 0.9rem;
+}
+
+/* Valgknapper: Middag / Lunsj …, Rask / Vegetar … */
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.chips button {
+  padding: 6px 12px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--card);
+  color: var(--text);
+  font: inherit;
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+
+.chips button[aria-pressed="true"] {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: #fff;
+}
+
+/* Porsjoner: − 4 pers. + */
+.servings {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  margin-left: auto;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.chips .servings button {
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  font-size: 1.1rem;
+  line-height: 1;
+}
+
+.chips .servings button:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+#servings-text {
+  min-width: 4.2em;
+  text-align: center;
+}
+
+/* Favoritter: sammenfoldet liste over forslagene */
+.favorites summary {
+  padding: 4px 0 8px;
+  cursor: pointer;
+  list-style: none;
+}
+
+.favorites summary::-webkit-details-marker {
+  display: none;
+}
+
+.favorites summary::after {
+  content: " ▸";
+}
+
+.favorites[open] summary::after {
+  content: " ▾";
+}
+
+/* ♡ og ✕ øverst i oppskriftsvinduet */
+.header-buttons {
+  display: flex;
+  gap: 6px;
+}
+
+.favorite-button {
+  font-size: 1.2rem;
+}
+
+.favorite-button.is-favorite {
+  color: var(--danger);
+}
+
+/* "Jeg lagde denne" */
+.cooked-meal {
+  margin: 4px 0 0;
+  font-weight: 600;
+}
+
+.cooked-hint {
+  margin: 6px 0 12px;
+}
+
+.cooked-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0 0 12px;
+  padding: 0;
+  list-style: none;
+}
+
+.cooked-list li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+
+/* Ikke avhuket: grått, så man ser at den hoppes over */
+.cooked-list li.skip {
+  opacity: 0.45;
+}
+
+.cooked-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  cursor: pointer;
+}
+
+.cooked-item input {
+  width: 20px;
+  height: 20px;
+  margin: 0;
+  accent-color: var(--accent);
+}
+
+.cooked-name {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.cooked-name small {
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+
+.cooked-rest {
+  flex-shrink: 0;
+  color: var(--muted);
+  font-size: 0.85rem;
+  white-space: nowrap;
+}
+
+.cooked-rest input {
+  width: 4.5em;
+  padding: 6px;
+}
+
+/* "Har alltid: salt, pepper, …  Endre" – én linje, kuttes med … */
+.basics-line {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+.basics-summary {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.basics-list {
+  margin: 12px 0;
+}
+
+.basics-form {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.basics-form input {
+  flex: 1;
+  min-width: 0;
+}
+
+/* "✨ Finn forslag" */
+.suggest {
+  padding: 12px 16px;
+  border: 1px solid var(--accent);
+  border-radius: 12px;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.suggest:disabled {
+  opacity: 0.7;
+  cursor: wait;
+}
+
+.suggest-status {
+  margin: 0;
+  color: var(--muted);
+  text-align: center;
+  overflow-wrap: anywhere; /* lange nettadresser i feilmeldinger brytes */
+}
+
+.suggest-status.error {
+  color: var(--danger);
+}
+
+/* "Fjern forslagene" under listen */
+.clear-suggestions {
+  align-self: center;
+  color: var(--muted);
+}
+
+.recipe-list {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr); /* lange tekster kuttes i stedet for å gjøre kortet bredere */
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.recipe-card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--card);
+  color: var(--text);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.recipe-card:hover {
+  border-color: var(--muted);
+}
+
+/* "MIDDAG (6)" – når listen har flere typer. Går over hele bredden. */
+.recipe-heading {
+  grid-column: 1 / -1;
+  margin-top: 8px;
+  color: var(--muted);
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.recipe-heading:first-child {
+  margin-top: 0;
+}
+
+/* Like høye kort: hver linje er én linje (kuttes med …), og alle kort
+   har plass til fire linjer – også de uten "Bruker …"-linjen.
+   Hele teksten står når man åpner retten. */
+.recipe-card {
+  min-height: 100px;
+  line-height: 1.3;
+}
+
+.recipe-card > * {
+  max-width: 100%;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.recipe-name {
+  font-weight: 600;
+}
+
+/* Bruker noe som snart går ut: gul kant, som varene */
+.recipe-card.uses-soon {
+  border-left: 4px solid var(--warn);
+}
+
+.recipe-card small {
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+
+.recipe-card .recipe-ok {
+  color: var(--accent);
+}
+
+/* "Mangler:" – mørkere og fet, resten grått */
+.recipe-card .recipe-missing strong {
+  color: var(--text);
+  font-weight: 600;
+}
+
+.recipe-card .recipe-soon {
+  color: var(--warn-text);
+}
+
+/* Vinduet for én rett er litt bredere */
+.recipe-dialog {
+  width: min(92vw, 480px);
+}
+
+.recipe-info {
+  margin: -4px 0 12px;
+}
+
+.ingredient-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 0 0 12px;
+  padding: 0;
+  list-style: none;
+}
+
+.ingredient-list li {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.ingredient-mark {
+  flex-shrink: 0;
+  width: 1.1em;
+  font-weight: 700;
+  text-align: center;
+}
+
+.ingredient-text {
+  flex: 1;
+}
+
+.ingredient-list small {
+  color: var(--muted);
+  font-size: 0.8rem;
+  white-space: nowrap;
+}
+
+.ingredient-list .has .ingredient-mark {
+  color: var(--accent);
+}
+
+.ingredient-list .missing .ingredient-mark,
+.ingredient-list .missing small {
+  color: var(--danger);
+}
+
+/* Fremgangsmåten: nummererte steg */
+.recipe-steps {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 0 0 12px;
+  padding-left: 1.4em;
+  line-height: 1.45;
+}
+
+.hint {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+/* Knappene i vinduet ligger ikke i et <form>, så de får stilen her */
+.recipe-dialog .dialog-buttons button {
+  padding: 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font: inherit;
+}
+
+.recipe-dialog .dialog-buttons button:not(.primary) {
+  background: var(--card);
+  color: var(--text);
+}
+
+@media (min-width: 900px) {
+  .recipes-open span {
+    display: inline;
+  }
+
+  .recipes {
+    max-width: 900px;
+    padding: 0 24px 80px;
+  }
+
+  /* To kort i bredden på PC */
+  .recipe-list {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }

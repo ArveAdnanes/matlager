@@ -36,6 +36,17 @@
       </a>
 
       <div class="topbar-actions">
+        <!-- Oppskrifter: "Hva kan jeg lage?" (teksten vises bare på PC) -->
+        <button id="recipes-open" class="recipes-open" type="button" title="Hva kan jeg lage?" aria-label="Oppskrifter" aria-pressed="false" hidden>
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M4 11h16v5a4 4 0 0 1-4 4H8a4 4 0 0 1-4-4z"/>
+              <path d="M2 11h2M20 11h2M9 7.5c0-1 1-1.5 1-2.5M14 7.5c0-1 1-1.5 1-2.5"/>
+            </g>
+          </svg>
+          <span>Oppskrifter</span>
+        </button>
+
         <!-- Tema: Lys / Auto (følg enheten) / Mørk -->
         <div class="theme-switch" role="group" aria-label="Tema">
           <button type="button" data-theme-choice="light" title="Lyst tema" aria-label="Lyst tema">
@@ -167,12 +178,16 @@
 
           <!-- Det man av og til trenger: skjult bak små knapper -->
           <div class="add-extras">
+            <button type="button" id="show-category" class="extra-toggle">+ Kategori</button>
             <span class="date-toggle">
               <button type="button" id="show-date" class="extra-toggle">+ Utløpsdato</button>
               <button type="button" id="clear-date" class="clear-date" aria-label="Fjern utløpsdato" title="Fjern utløpsdato" hidden>✕</button>
             </span>
             <button type="button" id="show-note" class="extra-toggle">+ Notat</button>
           </div>
+
+          <!-- Kategori: kategoriene for valgt sted + "+ Ny". Fylles av app.js -->
+          <div id="category-section" class="category-chips" role="group" aria-label="Kategori" hidden></div>
 
           <!-- Utløpsdato: hurtigknapper, eller "Velg dato…" for kalenderen -->
           <div id="date-section" class="date-section" hidden>
@@ -209,6 +224,8 @@
     <main class="list-area">
       <!-- Sortering av listen -->
       <div class="list-toolbar">
+        <!-- Lag kategori i fanen du står i (skjult mens man søker) -->
+        <button id="new-category" class="text-button" type="button">+ Ny kategori</button>
         <!-- "3 treff i alle steder" når man søker -->
         <p id="search-info" class="search-info" hidden></p>
         <select id="sort" aria-label="Sorter">
@@ -222,6 +239,102 @@
     </main>
 
   </div>
+
+  <!-- "Hva kan jeg lage?" – AI-forslag ut fra varene. Vises i stedet for varene (recipes.js) -->
+  <section id="recipes" class="recipes" hidden>
+    <div class="recipes-header">
+      <button id="recipes-back" class="text-button" type="button">← Varer</button>
+      <h2>Hva kan jeg lage?</h2>
+      <span class="header-spacer"></span>
+    </div>
+
+    <!-- Varer som går ut snart -->
+    <p id="use-soon" class="use-soon" hidden></p>
+
+    <!-- Hva slags mat (én), og ekstra ønsker (av/på) -->
+    <div id="meal-type" class="chips" role="group" aria-label="Måltid">
+      <button type="button" data-type="middag" aria-pressed="true">Middag</button>
+      <button type="button" data-type="lunsj" aria-pressed="false">Lunsj</button>
+      <button type="button" data-type="frokost" aria-pressed="false">Frokost</button>
+      <button type="button" data-type="dessert" aria-pressed="false">Dessert</button>
+    </div>
+    <div id="meal-extras" class="chips" role="group" aria-label="Ønsker">
+      <button type="button" data-extra="rask" aria-pressed="false">Rask</button>
+      <button type="button" data-extra="vegetar" aria-pressed="false">Vegetar</button>
+      <button type="button" data-extra="bare" aria-pressed="false">Bare det jeg har</button>
+      <!-- Porsjoner: − 4 pers. + -->
+      <span class="servings" role="group" aria-label="Porsjoner">
+        <button type="button" id="servings-minus" aria-label="Færre porsjoner">−</button>
+        <span id="servings-text">4 pers.</span>
+        <button type="button" id="servings-plus" aria-label="Flere porsjoner">+</button>
+      </span>
+    </div>
+
+    <!-- Basisvarer som aldri regnes som "mangler" -->
+    <p class="basics-line">
+      <span class="basics-summary">Har alltid: <span id="basics-text"></span></span>
+      <button id="basics-edit" class="text-button" type="button">Endre</button>
+    </p>
+
+    <button id="suggest" class="suggest primary" type="button">✨ Finn forslag</button>
+    <p id="suggest-status" class="suggest-status" role="status" hidden></p>
+
+    <!-- Lagrede favoritter (sammenfoldet). Fylles av recipes.js -->
+    <details id="favorites" class="favorites" hidden>
+      <summary id="favorites-title" class="recipe-heading">♥ Favoritter</summary>
+      <ul id="favorites-list" class="recipe-list"></ul>
+    </details>
+
+    <!-- Forslagene fra AI-en. Fylles av recipes.js -->
+    <ul id="suggestions" class="recipe-list"></ul>
+    <button id="clear-suggestions" class="text-button clear-suggestions" type="button" hidden>Fjern forslagene</button>
+  </section>
+
+  <!-- "Har alltid": legg til og fjern basisvarer -->
+  <dialog id="basics-dialog" class="recipe-dialog">
+    <div class="add-header">
+      <h2>Har alltid</h2>
+      <button id="basics-close" class="close-button" type="button" aria-label="Lukk">✕</button>
+    </div>
+    <p class="hint">Disse regnes aldri som «Mangler». Trykk på en for å fjerne den.</p>
+    <div id="basics-list" class="chips basics-list"></div>
+    <form id="basics-form" class="basics-form">
+      <input id="basics-input" type="text" placeholder="f.eks. ris, hvitløk" aria-label="Legg til basisvare" autocomplete="off">
+      <button type="submit">Legg til</button>
+    </form>
+    <button id="basics-reset" class="text-button" type="button">Tilbakestill til standard</button>
+  </dialog>
+
+  <!-- Én rett: ingrediensene (✓ har / ✕ mangler) og fremgangsmåten -->
+  <dialog id="recipe-dialog" class="recipe-dialog">
+    <div class="add-header">
+      <h2 id="recipe-title"></h2>
+      <div class="header-buttons">
+        <button id="recipe-favorite" class="close-button favorite-button" type="button" aria-label="Lagre som favoritt">♡</button>
+        <button id="recipe-close" class="close-button" type="button" aria-label="Lukk">✕</button>
+      </div>
+    </div>
+    <p id="recipe-info" class="hint recipe-info"></p>
+    <ul id="recipe-ingredients" class="ingredient-list"></ul>
+    <ol id="recipe-steps" class="recipe-steps"></ol>
+    <div class="dialog-buttons">
+      <button type="button" id="recipe-done">Lukk</button>
+      <button type="button" id="recipe-cooked" class="primary" title="Trekk ingrediensene fra lageret">Jeg lagde denne</button>
+    </div>
+  </dialog>
+
+  <!-- "Jeg lagde denne": hva ble brukt, og hvor mye er igjen? -->
+  <dialog id="cooked-dialog" class="recipe-dialog">
+    <h2>Trekk fra lageret</h2>
+    <p id="cooked-title" class="cooked-meal"></p>
+    <p class="hint cooked-hint">Ingrediensene under trekkes fra lageret ditt. Ta bort haken på det du ikke brukte, og juster hvor mye som er igjen. Står det 0, fjernes varen.</p>
+    <ul id="cooked-list" class="cooked-list"></ul>
+    <p id="cooked-empty" class="hint" hidden>Ingen av ingrediensene ligger i lageret ditt.</p>
+    <div class="dialog-buttons">
+      <button type="button" id="cooked-cancel">Avbryt</button>
+      <button type="button" id="cooked-save" class="primary">Trekk fra lageret</button>
+    </div>
+  </dialog>
 
   <!-- Redigeringsvindu: åpnes når du trykker på en vare -->
   <dialog id="edit-dialog">
@@ -252,6 +365,10 @@
           <option value="kjoleskap">Kjøleskap</option>
           <option value="torrvarer">Tørrvarer</option>
         </select>
+      </label>
+      <label>Kategori
+        <!-- Kategoriene for valgt lagringssted. Fylles av app.js -->
+        <select id="edit-category"></select>
       </label>
       <label>Utløpsdato
         <input id="edit-expires" type="date">
@@ -296,6 +413,23 @@
       <p id="password-error" class="error" hidden></p>
       <div class="dialog-buttons">
         <button type="button" id="password-cancel">Avbryt</button>
+        <button type="submit" class="primary">Lagre</button>
+      </div>
+    </form>
+  </dialog>
+
+  <!-- Ny kategori / gi nytt navn / slett kategori -->
+  <dialog id="category-dialog">
+    <form id="category-form" class="dialog-form">
+      <h2 id="category-title">Ny kategori</h2>
+      <label>Navn
+        <input id="category-name" type="text" placeholder="f.eks. Kjøtt" autocomplete="off" required>
+      </label>
+      <p id="category-error" class="error" hidden></p>
+      <!-- Bare når man endrer en kategori som finnes -->
+      <button type="button" id="category-delete" class="delete-button" hidden>Slett kategori</button>
+      <div class="dialog-buttons">
+        <button type="button" id="category-cancel">Avbryt</button>
         <button type="submit" class="primary">Lagre</button>
       </div>
     </form>
