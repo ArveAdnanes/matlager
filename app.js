@@ -1388,14 +1388,23 @@ clearDateBtn.addEventListener("click", () => {
 // "Velg dato…"
 pickDateBtn.addEventListener("click", openCalendar);
 
-// Dato valgt (hurtigknapp eller kalender): lukk datodelen, vis datoen på knappen
-expiresInput.addEventListener("change", () => {
+// Lukk datodelen når en dato er valgt, og vis datoen på knappen
+function closeDateSection() {
   if (expiresInput.value) {
     dateSection.hidden = true;
     expiresInput.hidden = true;
   }
   updateDateButton();
+}
+
+// Dato valgt. Hurtigknappene (+3 dager osv.) lukker med en gang.
+// Kalenderen på mobil sier fra om endringer mens man fortsatt velger
+// (f.eks. når man ruller i hjulet på iPhone) – da venter vi til den lukkes.
+expiresInput.addEventListener("change", (event) => {
+  if (!event.isTrusted) closeDateSection(); // fra en hurtigknapp
+  else updateDateButton();
 });
+expiresInput.addEventListener("blur", closeDateSection); // kalenderen er lukket
 
 // "+ Notat" / "− Notat": vis eller skjul notatfeltet (teksten blir liggende)
 showNoteBtn.addEventListener("click", () => {
