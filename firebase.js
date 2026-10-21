@@ -273,7 +273,7 @@ export function deleteFavorite(id) {
 // ---------- AI: forslag til hva du kan lage ----------
 
 // Googles Gemini via Firebase AI Logic. Bytt navnet her for å prøve en annen modell.
-const AI_MODEL = "gemini-3.6-flash";
+const AI_MODEL = "gemini-3.5-flash-lite";
 
 // Svaret skal alltid ha denne formen, så appen kan vise det pent
 const suggestionSchema = Schema.object({

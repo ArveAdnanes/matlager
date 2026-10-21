@@ -500,6 +500,28 @@ const EXPIRING_DAYS = 3;
 
 // Hadde boksen utgåtte varer sist den ble tegnet? (null = ikke tegnet ennå)
 let lastHasExpired = null;
+// Antall utgåtte varer nå (lagres sammen med valget ditt)
+let expiredCount = 0;
+
+// Om du selv har lukket/åpnet utløpsboksen: { open, expired } (null = ikke valgt)
+const EXPIRING_KEY = "matlager-utlop";
+
+function readExpiringChoice() {
+  try {
+    return JSON.parse(readSetting(EXPIRING_KEY));
+  } catch {
+    return null;
+  }
+}
+
+// Trykk på "Utløpsdato": husk om boksen nå er åpen eller lukket
+expiringSection.querySelector("summary").addEventListener("click", () => {
+  // Vent til nettleseren har åpnet/lukket boksen
+  setTimeout(() => {
+    const open = expiringSection.querySelector("details").open;
+    saveSetting(EXPIRING_KEY, JSON.stringify({ open, expired: expiredCount }));
+  }, 0);
+});
 
 // Tegn utløpsboksen: varer fra alle steder, delt i to grupper –
 // "Har gått ut" og "Går snart ut" (innen EXPIRING_DAYS dager)
@@ -515,13 +537,19 @@ function renderExpiring(searching) {
   expiringSection.hidden = searching || total === 0;
   expiringSection.classList.toggle("has-expired", expired.length > 0);
 
-  // Åpne boksen når noe har gått ut, lukk den når alt er i orden igjen.
-  // Endres bare når situasjonen endrer seg, så det du selv har valgt blir stående.
+  // Har du selv lukket eller åpnet boksen, huskes det (også etter oppdatering av
+  // siden) – helt til flere varer har gått ut enn da du valgte. Ellers åpnes
+  // boksen når noe har gått ut, og lukkes når alt er i orden igjen.
+  const details = expiringSection.querySelector("details");
   const hasExpired = expired.length > 0;
-  if (hasExpired !== lastHasExpired) {
-    expiringSection.querySelector("details").open = hasExpired;
-    lastHasExpired = hasExpired;
+  const choice = readExpiringChoice();
+  if (choice && expired.length <= choice.expired) {
+    details.open = choice.open;
+  } else if (hasExpired !== lastHasExpired) {
+    details.open = hasExpired;
   }
+  lastHasExpired = hasExpired;
+  expiredCount = expired.length;
   expiringCount.textContent = `(${total})`;
   expiringList.innerHTML = "";
 
@@ -1404,7 +1432,9 @@ expiresInput.addEventListener("change", (event) => {
   if (!event.isTrusted) closeDateSection(); // fra en hurtigknapp
   else updateDateButton();
 });
-expiresInput.addEventListener("blur", closeDateSection); // kalenderen er lukket
+// Kalenderen er lukket. Vent litt før datodelen lukkes: trykket som fjernet
+// fokuset (f.eks. på "Legg til") må rekke å treffe knappen før den flytter seg opp.
+expiresInput.addEventListener("blur", () => setTimeout(closeDateSection, 300));
 
 // "+ Notat" / "− Notat": vis eller skjul notatfeltet (teksten blir liggende)
 showNoteBtn.addEventListener("click", () => {

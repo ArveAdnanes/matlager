@@ -23,6 +23,8 @@ const HASH = "#oppskrifter";
 const SAVED_KEY = "matlager-forslag";
 // Er favorittlisten åpen? (huskes på denne enheten)
 const FAVORITES_OPEN_KEY = "matlager-favoritter-apen";
+// "Bruk det som snart går ut" på eller av (huskes på denne enheten)
+const USE_SOON_KEY = "matlager-bruk-snart";
 
 // "Har alltid": basisvarer som aldri regnes som "mangler". Kan endres av brukeren.
 const DEFAULT_BASICS = ["salt", "pepper", "olje", "smør", "hvetemel", "sukker", "buljong", "vanlige krydder"];
@@ -36,7 +38,7 @@ let options = null; // hjelpefunksjoner fra app.js
 let meals = []; // forslagene fra AI-en som vises nå
 let favorites = []; // lagrede favoritter (fra Firebase)
 let mealType = "middag";
-const extras = new Set(); // "rask", "vegetar", "bare"
+const extras = new Set(); // "rask", "vegetar", "bare", "snart"
 let basics = DEFAULT_BASICS;
 let servings = DEFAULT_SERVINGS;
 let stopWatchingSettings = null;
@@ -53,6 +55,7 @@ const useSoonEl = $("use-soon");
 const typeChips = $("meal-type");
 const extraChips = $("meal-extras");
 const servingsText = $("servings-text");
+const useSoonChip = extraChips.querySelector('[data-extra="snart"]');
 const suggestBtn = $("suggest");
 const statusEl = $("suggest-status");
 const listEl = $("suggestions");
@@ -90,6 +93,9 @@ export function initRecipes(opts) {
     meals = JSON.parse(options.readSetting(SAVED_KEY)) || [];
   } catch {}
   favoritesEl.open = options.readSetting(FAVORITES_OPEN_KEY) === "1";
+  // "Bruk det som snart går ut" er på med mindre du har slått den av
+  if (options.readSetting(USE_SOON_KEY) !== "0") extras.add("snart");
+  useSoonChip.setAttribute("aria-pressed", extras.has("snart"));
   addEventListener("hashchange", syncView);
 }
 
@@ -172,7 +178,7 @@ typeChips.addEventListener("click", (event) => {
   typeChips.querySelectorAll("button").forEach((b) => b.setAttribute("aria-pressed", b === button));
 });
 
-// Rask / Vegetar / Bare det jeg har – av og på hver for seg
+// Rask / Vegetar / Bare det jeg har / Bruk det som snart går ut – av og på hver for seg
 extraChips.addEventListener("click", (event) => {
   const button = event.target.closest("button[data-extra]");
   if (!button) return;
@@ -180,6 +186,7 @@ extraChips.addEventListener("click", (event) => {
   if (extras.has(key)) extras.delete(key);
   else extras.add(key);
   button.setAttribute("aria-pressed", extras.has(key));
+  if (key === "snart") options.saveSetting(USE_SOON_KEY, extras.has(key) ? "1" : "0");
 });
 
 // Porsjoner: − 4 pers. + (huskes på brukeren)
@@ -281,7 +288,8 @@ function buildPrompt() {
   }
   lines.push(`Dette har jeg alltid hjemme, og kan brukes fritt: ${[...basics, "vann"].join(", ")}.`);
 
-  const soon = soonItems();
+  // "Bruk det som snart går ut" av: AI-en får ikke vite hva som går ut snart
+  const soon = extras.has("snart") ? soonItems() : [];
   if (soon.length) {
     lines.push(`Dette bør brukes snart: ${soon.map((i) => i.name).join(", ")}`);
   }
@@ -293,8 +301,8 @@ function buildPrompt() {
   );
   if (soon.length) {
     lines.push(
-      "Bruk det som bør brukes snart i noen av rettene (gjerne 2–3), men bare der det passer naturlig. " +
-        "Ikke tving det inn i alle rettene."
+      "Bruk det som bør brukes snart i så mange av rettene som mulig, men bare der det passer naturlig. " +
+        "Ikke tving det inn i retter der det ikke hører hjemme."
     );
   }
   if (extras.has("rask")) lines.push("Hver rett skal ta under 30 minutter.");
@@ -400,6 +408,7 @@ function renderRecipes() {
 
   const soon = soonItems();
   useSoonEl.hidden = soon.length === 0;
+  useSoonChip.hidden = soon.length === 0; // knappen gir bare mening når noe går ut
   useSoonEl.textContent = `Bruk snart: ${soon.map((i) => i.name).join(", ")}`;
 
   if (!suggestBtn.disabled) suggestBtn.textContent = meals.length ? "✨ Flere forslag" : "✨ Finn forslag";
