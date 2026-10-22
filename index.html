@@ -184,6 +184,9 @@
               <button type="button" id="clear-date" class="clear-date" aria-label="Fjern utløpsdato" title="Fjern utløpsdato" hidden>✕</button>
             </span>
             <button type="button" id="show-note" class="extra-toggle">+ Notat</button>
+            <!-- AI leser varer fra et bilde eller en kvittering (scan.js) -->
+            <button type="button" id="scan-open" class="extra-toggle" title="Ta bilde, velg bilde eller PDF – eller lim inn med Ctrl+V">📷 Fra bilde</button>
+            <input id="scan-file" type="file" accept="image/*,application/pdf" hidden>
           </div>
 
           <!-- Kategori: kategoriene for valgt sted + "+ Ny". Fylles av app.js -->
@@ -291,6 +294,55 @@
     <ul id="suggestions" class="recipe-list"></ul>
     <button id="clear-suggestions" class="text-button clear-suggestions" type="button" hidden>Fjern forslagene</button>
   </section>
+
+  <!-- "Fra bilde": varene AI-en fant, én om gangen -->
+  <dialog id="scan-dialog" class="recipe-dialog scan-dialog">
+    <div class="add-header">
+      <h2 id="scan-title">Leser bildet …</h2>
+      <button id="scan-close" class="close-button" type="button" aria-label="Lukk">✕</button>
+    </div>
+    <p id="scan-status" class="suggest-status" role="status" hidden></p>
+    <form id="scan-form" class="dialog-form" hidden>
+      <p id="scan-progress" class="hint"></p>
+      <label>Navn
+        <input id="scan-name" type="text" autocomplete="off" required>
+      </label>
+      <div class="row">
+        <label>Antall
+          <input id="scan-qty" type="number" min="0" step="any" inputmode="decimal">
+        </label>
+        <label>Enhet
+          <select id="scan-unit">
+            <option value="">–</option>
+            <option>stk</option>
+            <option>pk</option>
+            <option>g</option>
+            <option>kg</option>
+            <option>dl</option>
+            <option>l</option>
+          </select>
+        </label>
+      </div>
+      <label>Lagringssted
+        <select id="scan-location"></select>
+      </label>
+      <label id="scan-category-label">Kategori
+        <select id="scan-category"></select>
+      </label>
+      <label>
+        <span>Utløpsdato <span id="scan-estimated" class="estimated" hidden>anslått</span></span>
+        <input id="scan-expires" type="date">
+      </label>
+      <label>Notat
+        <input id="scan-note" type="text" placeholder="f.eks. 90 g per pakke" autocomplete="off">
+      </label>
+      <div class="dialog-buttons">
+        <button type="button" id="scan-skip">Hopp over</button>
+        <button type="submit" class="primary">Legg til</button>
+      </div>
+      <button type="button" id="scan-all" class="text-button">Legg til alle</button>
+    </form>
+  </dialog>
 
   <!-- "Har alltid": legg til og fjern basisvarer -->
   <dialog id="basics-dialog" class="recipe-dialog">

@@ -1084,7 +1084,7 @@ dialog h2 {
 
   /* PC: "Legg til" ligger fast i kolonnen – ingen åpne-/lukkeknapp */
   .add-open,
-  .add-header .close-button {
+  .add-card .add-header .close-button {
     display: none;
   }
 
@@ -1583,6 +1583,26 @@ body.dragging {
 .cooked-rest input {
   width: 4.5em;
   padding: 6px;
+}
+
+/* "Fra bilde": én vare om gangen */
+.scan-dialog .dialog-form button[type="submit"] {
+  cursor: pointer;
+}
+
+.scan-dialog #scan-all {
+  align-self: center;
+}
+
+/* "anslått" ved siden av Utløpsdato */
+.estimated {
+  margin-left: 6px;
+  padding: 1px 6px;
+  border-radius: 999px;
+  background: var(--warn);
+  color: #1f2a24;
+  font-size: 0.75rem;
+  font-weight: 600;
 }
 
 /* "Har alltid: salt, pepper, …  Endre" – én linje, kuttes med … */

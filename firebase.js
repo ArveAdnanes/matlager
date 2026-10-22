@@ -270,7 +270,7 @@ export function deleteFavorite(id) {
   return deleteDoc(doc(favoritesRef(), id));
 }
 
-// ---------- AI: forslag til hva du kan lage ----------
+// ---------- AI: forslag til hva du kan lage, og varer fra bilde ----------
 
 // Googles Gemini via Firebase AI Logic. Bytt navnet her for å prøve en annen modell.
 const AI_MODEL = "gemini-3.5-flash-lite";
@@ -300,9 +300,29 @@ const suggestionSchema = Schema.object({
   },
 });
 
-let model = null;
+// Varer lest fra et bilde av varer eller en kvittering
+const scanSchema = Schema.object({
+  properties: {
+    kind: Schema.string({ description: "kvittering eller varer" }),
+    purchaseDate: Schema.string({ description: "Kjøpsdato fra kvitteringen som YYYY-MM-DD, ellers tom" }),
+    items: Schema.array({
+      items: Schema.object({
+        properties: {
+          name: Schema.string({ description: "Kort, vanlig norsk navn, f.eks. Kjøttdeig" }),
+          quantity: Schema.number({ description: "Antall pakker eller stykk" }),
+          unit: Schema.string({ description: "pk eller stk" }),
+          location: Schema.string({ description: "En av: fryser, kjoleskap, torrvarer" }),
+          category: Schema.string({ description: "Navnet på en av brukerens kategorier, eller tom" }),
+          expires: Schema.string({ description: "Utløpsdato som YYYY-MM-DD, eller tom" }),
+          expiresEstimated: Schema.boolean({ description: "true hvis datoen er anslått, false hvis den står på varen" }),
+          note: Schema.string({ description: "Vekt eller volum, f.eks. 90 g per pakke, eller tom" }),
+        },
+      }),
+    }),
+  },
+});
 
-// Grense: hver bruker kan trykke "Finn forslag" så mange ganger per dag.
+// Grense: hver bruker kan bruke AI-en (forslag eller bilde) så mange ganger per dag.
 // Brukerne i listen under har ingen grense.
 export const AI_DAILY_LIMIT = 5;
 const AI_UNLIMITED_USERS = ["arve"];
@@ -354,30 +374,63 @@ export function isBusyError(error) {
   return /\b50[03]\b|high demand|overloaded|unavailable/i.test(String(error?.message || error));
 }
 
-// Send teksten til AI-en, og få tilbake { meals: [...], remaining }
-export async function suggestMeals(prompt) {
+// Én modell per svarform (forslag eller varer fra bilde)
+let ai = null;
+const models = new Map();
+
+function modelFor(schema) {
+  if (!ai) ai = getAI(app, { backend: new GoogleAIBackend() });
+  if (!models.has(schema)) {
+    models.set(
+      schema,
+      getGenerativeModel(ai, {
+        model: AI_MODEL,
+        generationConfig: { responseMimeType: "application/json", responseSchema: schema },
+      })
+    );
+  }
+  return models.get(schema);
+}
+
+// Spør AI-en, og få tilbake svaret + hvor mange som er igjen i dag.
+// Teller mot dagsgrensen; mislykkes det, teller det ikke. Ingen automatisk
+// nytt forsøk: hvert forsøk teller mot gratiskvoten til Google.
+async function askAi(request, schema) {
   const remaining = await takeAiQuota();
   try {
-    return { ...(await askModel(prompt)), remaining };
+    const result = await modelFor(schema).generateContent(request);
+    return { ...JSON.parse(result.response.text()), remaining };
   } catch (error) {
     giveBackAiQuota().catch(console.error);
     throw error;
   }
 }
 
-// Spør modellen. Ingen automatisk nytt forsøk: hvert forsøk teller mot
-// gratiskvoten (20 per døgn), så brukeren får heller beskjed om å prøve igjen.
-async function askModel(prompt) {
-  if (!model) {
-    const ai = getAI(app, { backend: new GoogleAIBackend() });
-    model = getGenerativeModel(ai, {
-      model: AI_MODEL,
-      generationConfig: {
-        responseMimeType: "application/json",
-        responseSchema: suggestionSchema,
-      },
-    });
+// Forslag til retter: { meals: [...], remaining }
+export function suggestMeals(prompt) {
+  return askAi(prompt, suggestionSchema);
+}
+
+// Varer fra et bilde eller en PDF: { kind, purchaseDate, items: [...], remaining }
+// file = { mimeType: "image/jpeg", data: "base64…" }
+export function readFoodImage(prompt, file) {
+  return askAi([prompt, { inlineData: { mimeType: file.mimeType, data: file.data } }], scanSchema);
+}
+
+// Feilmeldinger fra AI-en på norsk
+export function aiErrorMessage(error) {
+  const text = String(error?.message || error);
+  console.error(error);
+  if (error?.code === "daily-limit") {
+    return `Du har brukt dagens ${AI_DAILY_LIMIT} AI-søk. Prøv igjen i morgen.`;
   }
-  const result = await model.generateContent(prompt);
-  return JSON.parse(result.response.text());
+  if (isBusyError(error)) return "Gemini har mye å gjøre akkurat nå. Prøv igjen om litt.";
+  if (!navigator.onLine) return "Du er uten nett. Prøv igjen når du er tilkoblet.";
+  if (/app.?check/i.test(text)) return "AI er ikke ferdig satt opp ennå (App Check).";
+  if (/429|quota|exhausted/i.test(text)) return "Gratiskvoten for AI er brukt opp for nå. Prøv igjen senere.";
+  if (/api.?not.?enabled|has not been used|disabled|403/i.test(text)) {
+    return "AI er ikke slått på i Firebase ennå (AI Logic).";
+  }
+  // Ukjent feil: vis starten av den tekniske meldingen, så den er lett å melde fra om
+  return `Fikk ikke svar fra AI-en. Prøv igjen. (${text.slice(0, 160)})`;
 }

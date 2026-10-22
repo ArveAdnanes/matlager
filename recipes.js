@@ -4,8 +4,7 @@
 
 import {
   suggestMeals,
-  isBusyError,
-  AI_DAILY_LIMIT,
+  aiErrorMessage,
   watchRecipeSettings,
   saveRecipeSettings,
   watchFavorites,
@@ -322,24 +321,6 @@ function buildPrompt() {
     "Skriv alt på norsk bokmål. Fremgangsmåten skal være korte steg."
   );
   return lines.join("\n");
-}
-
-// Feilmeldinger på norsk
-function aiErrorMessage(error) {
-  const text = String(error?.message || error);
-  console.error(error);
-  if (error?.code === "daily-limit") {
-    return `Du har brukt dagens ${AI_DAILY_LIMIT} søk. Prøv igjen i morgen.`;
-  }
-  if (isBusyError(error)) return "Gemini har mye å gjøre akkurat nå. Prøv igjen om litt.";
-  if (!navigator.onLine) return "Du er uten nett. Prøv igjen når du er tilkoblet.";
-  if (/app.?check/i.test(text)) return "AI er ikke ferdig satt opp ennå (App Check).";
-  if (/429|quota|exhausted/i.test(text)) return "Gratiskvoten for AI er brukt opp for nå. Prøv igjen senere.";
-  if (/api.?not.?enabled|has not been used|disabled|403/i.test(text)) {
-    return "AI er ikke slått på i Firebase ennå (AI Logic).";
-  }
-  // Ukjent feil: vis starten av den tekniske meldingen, så den er lett å melde fra om
-  return `Fikk ikke svar fra AI-en. Prøv igjen. (${text.slice(0, 160)})`;
 }
 
 suggestBtn.addEventListener("click", async () => {

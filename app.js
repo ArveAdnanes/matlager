@@ -20,6 +20,7 @@ import {
   watchHistory,
 } from "./firebase.js";
 import { initRecipes, startRecipes, stopRecipes, setRecipeItems } from "./recipes.js";
+import { initScan } from "./scan.js";
 
 // Der varene lå lagret i nettleseren før vi tok i bruk Firebase
 const LOCAL_KEY = "matlager";
@@ -1584,6 +1585,21 @@ categoryDeleteBtn.addEventListener("click", () => {
   showToast(`Kategorien «${category.name}» ble slettet`, () =>
     restoreCategory(category, itemIds).catch(showError)
   );
+});
+
+// ---------- Varer fra bilde (scan.js) ----------
+
+initScan({
+  locations: LOCATIONS,
+  categoriesFor,
+  findKnown,
+  currentLocation: () => current,
+  // Mobil: lukk "Legg til"-vinduet når varene er lagt inn
+  closeAddCard: () => {
+    if (!wideScreen.matches && addCard.open) addCard.close();
+  },
+  showToast,
+  showError,
 });
 
 // ---------- Oppskrifter (recipes.js) ----------

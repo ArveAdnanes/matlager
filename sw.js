@@ -2,7 +2,7 @@
 // og kan startes uten nett. Varene håndteres av Firebase, ikke her.
 
 // Bytt nummeret hvis du vil tvinge alle til å hente filene på nytt
-const CACHE = "matlager-v3";
+const CACHE = "matlager-v4";
 
 const APP_FILES = [
   "./",
@@ -11,6 +11,7 @@ const APP_FILES = [
   "./app.js",
   "./firebase.js",
   "./recipes.js",
+  "./scan.js",
   "./manifest.json",
   "./icons/icon.svg",
   "./icons/icon-192.png",
