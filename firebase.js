@@ -324,7 +324,7 @@ const scanSchema = Schema.object({
 
 // Grense: hver bruker kan bruke AI-en (forslag eller bilde) så mange ganger per dag.
 // Brukerne i listen under har ingen grense.
-export const AI_DAILY_LIMIT = 5;
+export const AI_DAILY_LIMIT = 15;
 const AI_UNLIMITED_USERS = ["arve"];
 
 // Dagens dato, f.eks. "2026-10-19"
