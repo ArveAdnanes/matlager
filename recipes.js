@@ -50,7 +50,9 @@ const appSection = $("app");
 const section = $("recipes");
 const openBtn = $("recipes-open");
 const backBtn = $("recipes-back");
-const useSoonEl = $("use-soon");
+const optionsSummary = $("options-summary");
+const optionsDialog = $("options-dialog");
+const soonNamesEl = $("soon-names");
 const typeChips = $("meal-type");
 const extraChips = $("meal-extras");
 const servingsText = $("servings-text");
@@ -144,18 +146,27 @@ function syncView() {
   section.hidden = !on;
   if (loggedIn) appSection.hidden = on;
   openBtn.setAttribute("aria-pressed", on);
+  document.body.classList.toggle("recipes-view", on); // menyen nederst viser "Oppskrifter" som valgt
   scrollTo(0, 0);
   if (on) renderRecipes();
 }
 
 openBtn.addEventListener("click", () => {
-  if (location.hash === HASH) {
-    closeView();
-  } else {
-    openedHere = true;
-    location.hash = HASH; // gir hashchange -> syncView
-  }
+  if (location.hash === HASH) closeView();
+  else openRecipesView();
 });
+
+// Vis oppskriftene (fra grytknappen eller menyen nederst)
+export function openRecipesView() {
+  if (location.hash === HASH) return;
+  openedHere = true;
+  location.hash = HASH; // gir hashchange -> syncView
+}
+
+// Tilbake til varene (gjør ingenting hvis de allerede vises)
+export function closeRecipesView() {
+  if (location.hash === HASH) closeView();
+}
 
 function closeView() {
   if (openedHere) {
@@ -186,13 +197,40 @@ extraChips.addEventListener("click", (event) => {
   else extras.add(key);
   button.setAttribute("aria-pressed", extras.has(key));
   if (key === "snart") options.saveSetting(USE_SOON_KEY, extras.has(key) ? "1" : "0");
+  renderSummary();
 });
+
+// "Valg ›": åpne vinduet med ønsker, porsjoner og "Har alltid"
+$("options-open").addEventListener("click", () => optionsDialog.showModal());
+$("options-close").addEventListener("click", () => optionsDialog.close());
+$("options-done").addEventListener("click", () => optionsDialog.close());
+
+// Linjen over "Finn forslag": "4 pers. · Rask · Bruker det som snart går ut (Kjøttdeig)"
+const EXTRA_LABELS = { rask: "Rask", vegetar: "Vegetar", bare: "Bare det jeg har" };
+
+function renderSummary() {
+  if (!options) return; // appen er ikke koblet til ennå
+  const soon = soonItems();
+  const soonNames = soon.map((i) => i.name).join(", ");
+  const parts = [`${servings} pers.`];
+  for (const [key, label] of Object.entries(EXTRA_LABELS)) {
+    if (extras.has(key)) parts.push(label);
+  }
+  if (extras.has("snart") && soon.length) parts.push(`Bruker det som snart går ut (${soonNames})`);
+  optionsSummary.textContent = parts.join(" · ");
+
+  // I vinduet: knappen og navnene vises bare når noe går ut snart
+  useSoonChip.hidden = soon.length === 0;
+  soonNamesEl.hidden = soon.length === 0;
+  soonNamesEl.textContent = `Går ut snart: ${soonNames}`;
+}
 
 // Porsjoner: − 4 pers. + (huskes på brukeren)
 function renderServings() {
   servingsText.textContent = `${servings} pers.`;
   $("servings-minus").disabled = servings <= 1;
   $("servings-plus").disabled = servings >= MAX_SERVINGS;
+  renderSummary();
 }
 
 function setServings(value) {
@@ -387,10 +425,7 @@ function isFavorite(meal) {
 function renderRecipes() {
   if (section.hidden || !options) return;
 
-  const soon = soonItems();
-  useSoonEl.hidden = soon.length === 0;
-  useSoonChip.hidden = soon.length === 0; // knappen gir bare mening når noe går ut
-  useSoonEl.textContent = `Bruk snart: ${soon.map((i) => i.name).join(", ")}`;
+  renderSummary(); // hva som går ut snart kan ha endret seg
 
   if (!suggestBtn.disabled) suggestBtn.textContent = meals.length ? "✨ Flere forslag" : "✨ Finn forslag";
   clearBtn.hidden = meals.length === 0;
@@ -699,7 +734,7 @@ renderBasics();
 renderServings();
 
 // Trykk i det mørke feltet utenfor et vindu lukker det
-for (const dialog of [basicsDialog, viewDialog, cookedDialog]) {
+for (const dialog of [basicsDialog, viewDialog, cookedDialog, optionsDialog]) {
   dialog.addEventListener("click", (event) => {
     if (event.target !== dialog) return; // trykk inni vinduet
     const box = dialog.getBoundingClientRect();

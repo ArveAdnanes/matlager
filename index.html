@@ -81,6 +81,31 @@
           </summary>
           <div class="menu-panel">
             <p class="menu-user">Innlogget som <strong id="user-label"></strong></p>
+            <!-- Mobil: temaet ligger her i stedet for i topplinjen -->
+            <div class="menu-theme">
+              <span>Tema</span>
+              <div class="theme-switch" role="group" aria-label="Tema">
+                <button type="button" data-theme-choice="light" title="Lyst tema" aria-label="Lyst tema">
+                  <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <circle cx="12" cy="12" r="4.5" fill="currentColor"/>
+                    <g stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                      <path d="M12 2v2.5M12 19.5V22M2 12h2.5M19.5 12H22M4.9 4.9l1.8 1.8M17.3 17.3l1.8 1.8M4.9 19.1l1.8-1.8M17.3 6.7l1.8-1.8"/>
+                    </g>
+                  </svg>
+                </button>
+                <button type="button" data-theme-choice="auto" title="Auto" aria-label="Følg enhetens tema">
+                  <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <circle cx="12" cy="12" r="8" fill="none" stroke="currentColor" stroke-width="2"/>
+                    <path d="M12 4a8 8 0 0 1 0 16z" fill="currentColor"/>
+                  </svg>
+                </button>
+                <button type="button" data-theme-choice="dark" title="Mørkt tema" aria-label="Mørkt tema">
+                  <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z" fill="currentColor"/>
+                  </svg>
+                </button>
+              </div>
+            </div>
             <button id="change-password" type="button">Bytt passord</button>
             <button id="logout" type="button">Logg ut</button>
           </div>
@@ -144,14 +169,22 @@
     <aside class="side">
 
       <!-- Mobil: knapp som åpner "Legg til"-vinduet (skjult på PC) -->
-      <button id="add-open" class="add-open" type="button">+ Legg til vare</button>
+      <!-- Mobil: rund +-knapp nede til høyre (alltid synlig). Skjult på PC. -->
+      <button id="add-open" class="add-open" type="button" aria-label="Legg til vare" title="Legg til vare">
+        <svg class="fab-icon" width="28" height="28" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg><span class="fab-label">Legg til vare</span>
+      </button>
 
       <!-- "Legg til vare". Mobil: vindu som glir opp fra bunnen.
            PC: ligger alltid åpent her i venstre kolonne. -->
       <dialog id="add-card" class="add-card">
         <div class="add-header">
           <h2>Legg til vare</h2>
-          <button id="add-close" class="close-button" type="button" aria-label="Lukk">✕</button>
+          <div class="header-buttons">
+            <!-- AI leser varer fra et bilde eller en kvittering (scan.js) -->
+            <button type="button" id="scan-open" class="scan-button" title="Ta bilde, velg bilde eller PDF – eller lim inn med Ctrl+V">📷 Fra bilde</button>
+            <input id="scan-file" type="file" accept="image/*,application/pdf" hidden>
+            <button id="add-close" class="close-button" type="button" aria-label="Lukk">✕</button>
+          </div>
         </div>
         <form id="add-form">
           <!-- Hvor varen skal ligge. Følger fanen, men kan endres her -->
@@ -184,9 +217,6 @@
               <button type="button" id="clear-date" class="clear-date" aria-label="Fjern utløpsdato" title="Fjern utløpsdato" hidden>✕</button>
             </span>
             <button type="button" id="show-note" class="extra-toggle">+ Notat</button>
-            <!-- AI leser varer fra et bilde eller en kvittering (scan.js) -->
-            <button type="button" id="scan-open" class="extra-toggle" title="Ta bilde, velg bilde eller PDF – eller lim inn med Ctrl+V">📷 Fra bilde</button>
-            <input id="scan-file" type="file" accept="image/*,application/pdf" hidden>
           </div>
 
           <!-- Kategori: kategoriene for valgt sted + "+ Ny". Fylles av app.js -->
@@ -194,13 +224,6 @@
 
           <!-- Utløpsdato: hurtigknapper, eller "Velg dato…" for kalenderen -->
           <div id="date-section" class="date-section" hidden>
-            <div class="date-chips" data-for="expires" role="group" aria-label="Hurtigvalg for utløpsdato">
-              <button type="button" data-days="3">+3 dager</button>
-              <button type="button" data-days="7">+1 uke</button>
-              <button type="button" data-months="1">+1 mnd</button>
-              <button type="button" data-months="3">+3 mnd</button>
-            </div>
-            <button type="button" id="pick-date" class="pick-date">Velg dato…</button>
             <input id="expires" type="date" aria-label="Utløpsdato" hidden>
           </div>
 
@@ -243,6 +266,14 @@
 
   </div>
 
+  <!-- Mobil: meny nederst – stedene og oppskrifter. PC bruker fanene over listen. -->
+  <nav id="bottom-nav" class="bottom-nav" aria-label="Meny" hidden>
+    <button class="tab nav-item" data-location="fryser" type="button"><span class="loc-icon" data-location-icon="fryser"></span><span class="nav-label">Fryser <span class="count"></span></span></button>
+    <button class="tab nav-item" data-location="kjoleskap" type="button"><span class="loc-icon" data-location-icon="kjoleskap"></span><span class="nav-label">Kjøleskap <span class="count"></span></span></button>
+    <button class="tab nav-item" data-location="torrvarer" type="button"><span class="loc-icon" data-location-icon="torrvarer"></span><span class="nav-label">Tørrvarer <span class="count"></span></span></button>
+    <button id="nav-recipes" class="nav-item" type="button"><span class="loc-icon"><svg viewBox="0 0 24 24" aria-hidden="true"> <g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"> <path d="M4 11h16v5a4 4 0 0 1-4 4H8a4 4 0 0 1-4-4z"/> <path d="M2 11h2M20 11h2M9 7.5c0-1 1-1.5 1-2.5M14 7.5c0-1 1-1.5 1-2.5"/> </g> </svg></span><span class="nav-label">Oppskrifter</span></button>
+  </nav>
+
   <!-- "Hva kan jeg lage?" – AI-forslag ut fra varene. Vises i stedet for varene (recipes.js) -->
   <section id="recipes" class="recipes" hidden>
     <div class="recipes-header">
@@ -251,9 +282,6 @@
       <span class="header-spacer"></span>
     </div>
 
-    <!-- Varer som går ut snart -->
-    <p id="use-soon" class="use-soon" hidden></p>
-
     <!-- Hva slags mat (én), og ekstra ønsker (av/på) -->
     <div id="meal-type" class="chips" role="group" aria-label="Måltid">
       <button type="button" data-type="middag" aria-pressed="true">Middag</button>
@@ -261,25 +289,12 @@
       <button type="button" data-type="frokost" aria-pressed="false">Frokost</button>
       <button type="button" data-type="dessert" aria-pressed="false">Dessert</button>
     </div>
-    <div id="meal-extras" class="chips" role="group" aria-label="Ønsker">
-      <button type="button" data-extra="rask" aria-pressed="false">Rask</button>
-      <button type="button" data-extra="vegetar" aria-pressed="false">Vegetar</button>
-      <button type="button" data-extra="bare" aria-pressed="false">Bare det jeg har</button>
-      <!-- På: AI-en bruker det som går ut snart i så mange retter som mulig. Av: ikke nevnt. -->
-      <button type="button" data-extra="snart" aria-pressed="true" hidden>Bruk det som snart går ut</button>
-      <!-- Porsjoner: − 4 pers. + -->
-      <span class="servings" role="group" aria-label="Porsjoner">
-        <button type="button" id="servings-minus" aria-label="Færre porsjoner">−</button>
-        <span id="servings-text">4 pers.</span>
-        <button type="button" id="servings-plus" aria-label="Flere porsjoner">+</button>
-      </span>
-    </div>
 
-    <!-- Basisvarer som aldri regnes som "mangler" -->
-    <p class="basics-line">
-      <span class="basics-summary">Har alltid: <span id="basics-text"></span></span>
-      <button id="basics-edit" class="text-button" type="button">Endre</button>
-    </p>
+    <!-- Det som er valgt, i én linje. Trykk for å endre (Valg-vinduet under). -->
+    <button id="options-open" class="options-line" type="button">
+      <span id="options-summary" class="options-summary"></span>
+      <span class="options-link">Valg ›</span>
+    </button>
 
     <button id="suggest" class="suggest primary" type="button">✨ Finn forslag</button>
     <p id="suggest-status" class="suggest-status" role="status" hidden></p>
@@ -294,6 +309,50 @@
     <ul id="suggestions" class="recipe-list"></ul>
     <button id="clear-suggestions" class="text-button clear-suggestions" type="button" hidden>Fjern forslagene</button>
   </section>
+
+  <!-- Valg for forslagene: ønsker, porsjoner og "Har alltid".
+       Mobil: glir opp nedenfra. PC: vindu i midten. -->
+  <dialog id="options-dialog" class="recipe-dialog sheet">
+    <div class="add-header">
+      <h2>Valg</h2>
+      <button id="options-close" class="close-button" type="button" aria-label="Lukk">✕</button>
+    </div>
+
+    <div class="options-section">
+      <p class="options-title">Ønsker</p>
+      <div id="meal-extras" class="chips" role="group" aria-label="Ønsker">
+        <button type="button" data-extra="rask" aria-pressed="false">Rask</button>
+        <button type="button" data-extra="vegetar" aria-pressed="false">Vegetar</button>
+        <button type="button" data-extra="bare" aria-pressed="false">Bare det jeg har</button>
+        <!-- På: AI-en bruker det som går ut snart i så mange retter som mulig. Av: ikke nevnt. -->
+        <button type="button" data-extra="snart" aria-pressed="true" hidden>Bruk det som snart går ut</button>
+      </div>
+      <!-- Hvilke varer som går ut snart -->
+      <p id="soon-names" class="hint soon-names" hidden></p>
+    </div>
+
+    <div class="options-section options-row">
+      <p class="options-title">Porsjoner</p>
+      <span class="servings" role="group" aria-label="Porsjoner">
+        <button type="button" id="servings-minus" aria-label="Færre porsjoner">−</button>
+        <span id="servings-text">4 pers.</span>
+        <button type="button" id="servings-plus" aria-label="Flere porsjoner">+</button>
+      </span>
+    </div>
+
+    <!-- Basisvarer som aldri regnes som "mangler" -->
+    <div class="options-section">
+      <p class="options-title">Har alltid</p>
+      <p class="basics-line">
+        <span class="basics-summary"><span id="basics-text"></span></span>
+        <button id="basics-edit" class="text-button" type="button">Endre</button>
+      </p>
+    </div>
+
+    <div class="dialog-buttons">
+      <button type="button" id="options-done" class="primary">Ferdig</button>
+    </div>
+  </dialog>
 
   <!-- "Fra bilde": varene AI-en fant, én om gangen -->
   <dialog id="scan-dialog" class="recipe-dialog scan-dialog">
@@ -427,13 +486,6 @@
       <label>Utløpsdato
         <input id="edit-expires" type="date">
       </label>
-      <!-- Hurtigvalg for utløpsdato (fra i dag) -->
-      <div class="date-chips" data-for="edit-expires" role="group" aria-label="Hurtigvalg for utløpsdato">
-        <button type="button" data-days="3">+3 dager</button>
-        <button type="button" data-days="7">+1 uke</button>
-        <button type="button" data-months="1">+1 mnd</button>
-        <button type="button" data-months="3">+3 mnd</button>
-      </div>
       <label>Notat
         <textarea id="edit-note" rows="2" placeholder="f.eks. hjemmelaget, 2 porsjoner" autocomplete="off"></textarea>
       </label>

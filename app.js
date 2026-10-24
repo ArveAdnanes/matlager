@@ -19,7 +19,14 @@ import {
   rememberName,
   watchHistory,
 } from "./firebase.js";
-import { initRecipes, startRecipes, stopRecipes, setRecipeItems } from "./recipes.js";
+import {
+  initRecipes,
+  startRecipes,
+  stopRecipes,
+  setRecipeItems,
+  openRecipesView,
+  closeRecipesView,
+} from "./recipes.js";
 import { initScan } from "./scan.js";
 
 // Der varene lå lagret i nettleseren før vi tok i bruk Firebase
@@ -130,7 +137,6 @@ const showDateBtn = document.getElementById("show-date");
 const clearDateBtn = document.getElementById("clear-date");
 const showNoteBtn = document.getElementById("show-note");
 const dateSection = document.getElementById("date-section");
-const pickDateBtn = document.getElementById("pick-date");
 const searchInput = document.getElementById("search");
 const expiringSection = document.getElementById("expiring");
 const expiringCount = document.getElementById("expiring-count");
@@ -728,8 +734,15 @@ function selectTab(location) {
 }
 
 tabs.forEach((tab) => {
-  tab.addEventListener("click", () => selectTab(tab.dataset.location));
+  tab.addEventListener("click", () => {
+    selectTab(tab.dataset.location);
+    closeRecipesView(); // menyen nederst: et sted tar deg tilbake til varene
+  });
 });
+
+// Mobil: menyen nederst (stedene er vanlige faner, se over) og "Oppskrifter"
+const bottomNav = document.getElementById("bottom-nav");
+document.getElementById("nav-recipes").addEventListener("click", openRecipesView);
 
 // ---------- "Legg til": vindu på mobil, fast kort på PC ----------
 
@@ -1317,31 +1330,6 @@ expiringList.addEventListener("click", (event) => {
   if (item) openEdit(item);
 });
 
-// ---------- Hurtigknapper for utløpsdato ----------
-
-// Dato et antall dager/måneder fra i dag, som "2026-10-25" (formatet datofeltet bruker)
-function dateFromToday({ days = 0, months = 0 }) {
-  const date = new Date();
-  date.setMonth(date.getMonth() + months);
-  date.setDate(date.getDate() + days);
-  const pad = (n) => String(n).padStart(2, "0");
-  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
-}
-
-// "+3 dager", "+1 uke" osv. fyller inn datofeltet som står i data-for
-document.querySelectorAll(".date-chips").forEach((group) => {
-  const input = document.getElementById(group.dataset.for);
-  group.addEventListener("click", (event) => {
-    const button = event.target.closest("button");
-    if (!button) return;
-    input.value = dateFromToday({
-      days: Number(button.dataset.days || 0),
-      months: Number(button.dataset.months || 0),
-    });
-    input.dispatchEvent(new Event("change")); // si fra at datoen er endret
-  });
-});
-
 // ---------- Utløpsdato og notat i "Legg til" (skjult til man trenger dem) ----------
 
 // "2026-10-25" -> "25. okt."
@@ -1351,7 +1339,7 @@ function prettyDate(value) {
 }
 
 // Datoknappen: "Går ut 25. okt." (+ egen ✕-knapp) når dato er valgt,
-// "− Utløpsdato" når hurtigknappene er åpne, ellers "+ Utløpsdato"
+// "− Utløpsdato" mens kalenderen er åpen, ellers "+ Utløpsdato"
 function updateDateButton() {
   const hasDate = expiresInput.value !== "";
   const open = !dateSection.hidden;
@@ -1393,17 +1381,16 @@ function openCalendar() {
   } catch {}
 }
 
-// "+ Utløpsdato": vis/skjul hurtigknappene.
-// Har man valgt dato ("Går ut 25. okt."): åpne kalenderen for å endre den.
+// "+ Utløpsdato" (eller "Går ut 25. okt."): åpne kalenderen.
+// "− Utløpsdato" (kalenderen er åpen uten dato): lukk igjen.
 showDateBtn.addEventListener("click", () => {
-  if (expiresInput.value) {
-    dateSection.hidden = false;
-    updateDateButton();
-    openCalendar();
+  if (!dateSection.hidden && !expiresInput.value) {
+    closeDateSection();
     return;
   }
-  dateSection.hidden = !dateSection.hidden;
+  dateSection.hidden = false;
   updateDateButton();
+  openCalendar();
 });
 
 // ✕: fjern datoen
@@ -1414,25 +1401,16 @@ clearDateBtn.addEventListener("click", () => {
   updateDateButton();
 });
 
-// "Velg dato…"
-pickDateBtn.addEventListener("click", openCalendar);
-
-// Lukk datodelen når en dato er valgt, og vis datoen på knappen
+// Lukk datofeltet og vis datoen på knappen ("Går ut 25. okt.")
 function closeDateSection() {
-  if (expiresInput.value) {
-    dateSection.hidden = true;
-    expiresInput.hidden = true;
-  }
+  dateSection.hidden = true;
+  expiresInput.hidden = true;
   updateDateButton();
 }
 
-// Dato valgt. Hurtigknappene (+3 dager osv.) lukker med en gang.
-// Kalenderen på mobil sier fra om endringer mens man fortsatt velger
-// (f.eks. når man ruller i hjulet på iPhone) – da venter vi til den lukkes.
-expiresInput.addEventListener("change", (event) => {
-  if (!event.isTrusted) closeDateSection(); // fra en hurtigknapp
-  else updateDateButton();
-});
+// Dato valgt. Kalenderen på mobil sier fra om endringer mens man fortsatt
+// velger (f.eks. når man ruller i hjulet på iPhone) – da lukkes den ikke ennå.
+expiresInput.addEventListener("change", updateDateButton);
 // Kalenderen er lukket. Vent litt før datodelen lukkes: trykket som fjernet
 // fokuset (f.eks. på "Legg til") må rekke å treffe knappen før den flytter seg opp.
 expiresInput.addEventListener("blur", () => setTimeout(closeDateSection, 300));
@@ -1645,6 +1623,7 @@ watchUser((user) => {
     loginSection.hidden = true;
     appSection.hidden = false;
     menu.hidden = false;
+    bottomNav.hidden = false;
     const username = emailToUsername(user.email);
     userLabel.textContent = username;
     userInitial.textContent = username.charAt(0).toUpperCase(); // "arve" -> "A"
@@ -1672,6 +1651,7 @@ watchUser((user) => {
     render();
     appSection.hidden = true;
     menu.hidden = true;
+    bottomNav.hidden = true;
     menu.open = false;
     loginSection.hidden = false;
   }

@@ -703,17 +703,14 @@ form button {
   font-weight: 600;
 }
 
-/* Hurtigknapper for utløpsdato: +3 dager, +1 uke … */
-.date-chips,
+/* Kategoriknappene i "Legg til" */
 .category-chips {
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
 }
 
-.date-chips button,
-.category-chips button,
-.pick-date {
+.category-chips button {
   padding: 5px 10px;
   border: 1px solid var(--border);
   border-radius: 999px;
@@ -721,10 +718,6 @@ form button {
   color: var(--text);
   font-size: 0.85rem;
   cursor: pointer;
-}
-
-.date-chips button:hover {
-  border-color: var(--accent);
 }
 
 #add-form button[type="submit"] {
@@ -1373,24 +1366,6 @@ body.dragging {
   color: #fff;
 }
 
-/* Smale mobiler: litt mindre tema-bryter, og bare logoen uten navn */
-@media (max-width: 430px) {
-  .topbar-actions {
-    gap: 6px;
-  }
-
-  .theme-switch button {
-    width: 28px;
-    height: 28px;
-  }
-}
-
-@media (max-width: 380px) {
-  .brand span {
-    display: none;
-  }
-}
-
 .recipes {
   display: flex;
   flex-direction: column;
@@ -1415,17 +1390,6 @@ body.dragging {
 .recipes-header h2 {
   margin: 0;
   font-size: 1.15rem;
-}
-
-/* "Bruk snart: Kyllingfilet, Melk" */
-.use-soon {
-  margin: 0;
-  padding: 10px 12px;
-  border-left: 4px solid var(--warn);
-  border-radius: 8px;
-  background: var(--card);
-  color: var(--warn-text);
-  font-size: 0.9rem;
 }
 
 /* Valgknapper: Middag / Lunsj …, Rask / Vegetar … */
@@ -1457,12 +1421,11 @@ body.dragging {
   display: inline-flex;
   align-items: center;
   gap: 2px;
-  margin-left: auto;
   color: var(--muted);
   font-size: 0.9rem;
 }
 
-.chips .servings button {
+.servings button {
   width: 32px;
   height: 32px;
   padding: 0;
@@ -1470,7 +1433,7 @@ body.dragging {
   line-height: 1;
 }
 
-.chips .servings button:disabled {
+.servings button:disabled {
   opacity: 0.4;
   cursor: default;
 }
@@ -1849,5 +1812,301 @@ body.dragging {
   /* To kort i bredden på PC */
   .recipe-list {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+/* ---------- Mobil: meny nederst, rund +-knapp, tema i kontomenyen ---------- */
+
+/* Tema i kontomenyen – bare på mobil */
+.menu-theme {
+  display: none;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.menu-panel .theme-switch button {
+  padding: 0;
+  border: none;
+  background: transparent;
+  text-align: center;
+}
+
+.menu-panel .theme-switch button[aria-pressed="true"] {
+  background: var(--card);
+}
+
+/* "📷 Fra bilde" øverst i "Legg til vare" */
+.add-header .header-buttons {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.scan-button {
+  padding: 7px 12px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--bg);
+  color: var(--text);
+  font: inherit;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.scan-button:hover {
+  border-color: var(--accent);
+}
+
+/* Menyen nederst finnes bare på mobil */
+.bottom-nav {
+  display: none;
+}
+
+/* "Legg til vare"-teksten på +-knappen vises bare for skjermlesere på mobil */
+.fab-icon {
+  display: none;
+}
+
+@media (max-width: 899px) {
+  /* Plass nederst til menyen */
+  body {
+    padding-bottom: calc(64px + env(safe-area-inset-bottom, 0px));
+  }
+
+  /* Topplinjen: bare logo og konto. Tema ligger i kontomenyen, oppskrifter i menyen nederst. */
+  .topbar-actions > .theme-switch,
+  .recipes-open {
+    display: none;
+  }
+
+  .menu-theme {
+    display: flex;
+  }
+
+  /* Fanene over listen erstattes av menyen nederst */
+  .layout > .tabs {
+    display: none;
+  }
+
+  .bottom-nav {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 15;
+    display: flex;
+    padding: 4px 4px calc(4px + env(safe-area-inset-bottom, 0px));
+    background: var(--card);
+    border-top: 1px solid var(--border);
+  }
+
+  .bottom-nav .nav-item {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+    min-width: 0;
+    padding: 6px 2px;
+    border: none;
+    border-radius: 10px;
+    background: transparent;
+    color: var(--muted);
+    font: inherit;
+    font-size: 0.72rem;
+    cursor: pointer;
+  }
+
+  .bottom-nav .loc-icon {
+    width: 22px;
+    height: 22px;
+    color: inherit;
+  }
+
+  .bottom-nav .loc-icon svg {
+    width: 100%;
+    height: 100%;
+  }
+
+  .bottom-nav .nav-label {
+    max-width: 100%;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
+
+  .bottom-nav .count {
+    font-size: 0.9em;
+  }
+
+  /* Valgt sted: farget ikon og tydelig tekst (ikke under søk eller oppskrifter) */
+  .bottom-nav .tab.active {
+    background: transparent;
+    color: var(--text);
+    font-weight: 600;
+  }
+
+  .bottom-nav .tab.active .loc-icon {
+    color: var(--loc);
+  }
+
+  .searching .bottom-nav .tab.active,
+  .recipes-view .bottom-nav .tab.active {
+    color: var(--muted);
+    font-weight: normal;
+  }
+
+  .searching .bottom-nav .tab.active .loc-icon,
+  .recipes-view .bottom-nav .tab.active .loc-icon {
+    color: inherit;
+  }
+
+  .recipes-view #nav-recipes {
+    color: var(--text);
+    font-weight: 600;
+  }
+
+  .recipes-view #nav-recipes .loc-icon {
+    color: var(--accent);
+  }
+
+  /* Rund +-knapp nede til høyre, over menyen */
+  .add-open {
+    position: fixed;
+    right: 16px;
+    bottom: calc(76px + env(safe-area-inset-bottom, 0px));
+    z-index: 14;
+    display: grid;
+    place-items: center;
+    width: 56px;
+    height: 56px;
+    padding: 0;
+    border: none;
+    border-radius: 50%;
+    background: var(--accent);
+    color: #fff;
+    box-shadow: 0 4px 14px rgb(0 0 0 / 0.3);
+  }
+
+  .fab-icon {
+    display: block;
+    width: 28px;
+    height: 28px;
+  }
+
+  .fab-label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+  }
+
+  /* Plass under den siste varen, så +-knappen ikke dekker den */
+  .list-area {
+    padding-bottom: 96px;
+  }
+
+  /* Meldingen nederst ("… ble slettet – Angre") legger seg over menyen */
+  .toast {
+    bottom: calc(80px + env(safe-area-inset-bottom, 0px));
+  }
+}
+
+/* ---------- Oppskrifter: oppsummering og Valg-vinduet ---------- */
+
+/* "4 pers. · Rask · …    Valg ›" */
+.options-line {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--card);
+  color: var(--muted);
+  font: inherit;
+  font-size: 0.85rem;
+  text-align: left;
+  cursor: pointer;
+}
+
+.options-summary {
+  flex: 1;
+  min-width: 0;
+  /* Maks to linjer, kuttes med … */
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.options-link {
+  flex-shrink: 0;
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.options-section {
+  margin-bottom: 16px;
+}
+
+.options-title {
+  margin: 0 0 8px;
+  color: var(--muted);
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+/* Porsjoner: tittel til venstre, − 4 pers. + til høyre */
+.options-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.options-row .options-title {
+  margin: 0;
+}
+
+.soon-names {
+  margin-top: 8px;
+  color: var(--warn-text);
+}
+
+.servings button {
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--card);
+  color: var(--text);
+  cursor: pointer;
+}
+
+@media (max-width: 899px) {
+  /* Menyen nederst tar deg tilbake til varene – "← Varer" trengs ikke */
+  #recipes-back {
+    display: none;
+  }
+
+  /* Valg-vinduet glir opp nedenfra, som "Legg til vare" */
+  .sheet {
+    width: 100%;
+    max-width: 100%;
+    max-height: 90vh;
+    margin: auto 0 0;
+    padding: 16px 16px calc(16px + env(safe-area-inset-bottom, 0px));
+    border: none;
+    border-radius: 16px 16px 0 0;
+    overflow-y: auto;
+  }
+
+  .sheet[open] {
+    animation: slide-up 0.2s ease-out;
   }
 }
