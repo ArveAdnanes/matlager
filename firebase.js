@@ -53,7 +53,7 @@ const app = initializeApp(firebaseConfig);
 // så ingen andre kan bruke AI-kvoten din. Nøkkelen er fra reCAPTCHA
 // Enterprise (ikke hemmelig). På egen PC (Live Server) brukes en
 // "debug-token" i stedet – den skrives ut i konsollen og registreres i Firebase.
-const RECAPTCHA_SITE_KEY = "";
+const RECAPTCHA_SITE_KEY = "6LdSg_4tAAAAAIKfKEYwO62eJYhZbNjYkpVtIfe6";
 const isLocal = ["localhost", "127.0.0.1"].includes(location.hostname);
 if (isLocal) self.FIREBASE_APPCHECK_DEBUG_TOKEN = true;
 if (isLocal || RECAPTCHA_SITE_KEY) {
