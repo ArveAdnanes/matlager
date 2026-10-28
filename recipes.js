@@ -236,7 +236,7 @@ function renderSummary() {
   // I vinduet: knappen og navnene vises bare når noe går ut snart
   useSoonChip.hidden = soon.length === 0;
   soonNamesEl.hidden = soon.length === 0;
-  soonNamesEl.textContent = `Går ut snart: ${soonNames}`;
+  soonNamesEl.textContent = soonNames;
 }
 
 // Porsjoner: − 4 pers. + (huskes på brukeren)

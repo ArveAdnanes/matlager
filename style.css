@@ -1778,24 +1778,6 @@ body.dragging {
   font-weight: 600;
 }
 
-/* "Har alltid: salt, pepper, …  Endre" – én linje, kuttes med … */
-.basics-line {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin: 0;
-  color: var(--muted);
-  font-size: 0.85rem;
-}
-
-.basics-summary {
-  flex: 1;
-  min-width: 0;
-  overflow: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
-}
-
 .basics-list {
   margin: 12px 0;
 }
@@ -2376,35 +2358,6 @@ body.dragging {
   font-weight: 600;
 }
 
-.options-section {
-  margin-bottom: 16px;
-}
-
-.options-title {
-  margin: 0 0 8px;
-  color: var(--muted);
-  font-size: 0.8rem;
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-}
-
-/* Porsjoner: tittel til venstre, − 4 pers. + til høyre */
-.options-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.options-row .options-title {
-  margin: 0;
-}
-
-.soon-names {
-  margin-top: 8px;
-  color: var(--warn-text);
-}
-
 .servings button {
   border: 1px solid var(--border);
   border-radius: 999px;
@@ -2434,15 +2387,6 @@ body.dragging {
   .sheet[open] {
     animation: slide-up 0.2s ease-out;
   }
-}
-
-/* "Eget ønske" i Valg-vinduet (tittelen er en label, ikke en p) */
-label.options-title {
-  display: block;
-}
-
-.meal-wish {
-  width: 100%;
 }
 
 /* ✕ øverst til høyre på et forslag: fjern bare dette */
@@ -2724,6 +2668,157 @@ label.options-title {
   .intro-arrow,
   .intro-ring,
   #intro-holes rect {
+    transition: none;
+  }
+}
+
+/* ---------- Valg-vinduet for oppskrifter: som en innstillingsside ---------- */
+
+.options-dialog h2:focus {
+  outline: none;
+}
+
+/* "Noe spesielt du har lyst på?" + feltet */
+.options-label {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+.meal-wish {
+  width: 100%;
+  margin-bottom: 16px;
+}
+
+/* Kort med linjer, tynne streker mellom (som varelisten) */
+.options-group {
+  margin-bottom: 16px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+
+.option-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  min-height: 56px;
+  padding: 10px 14px;
+  border: none;
+  border-top: 1px solid var(--border);
+  background: var(--card);
+  color: var(--text);
+  font: inherit;
+  font-weight: 600;
+  text-align: left;
+}
+
+.options-group > .option-row:first-child,
+.options-group > [hidden] + .option-row {
+  border-top: none;
+}
+
+button.option-row {
+  cursor: pointer;
+}
+
+/* Navn + liten forklaring under */
+.option-text {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+
+.option-text small {
+  overflow: hidden;
+  color: var(--muted);
+  font-size: 0.8rem;
+  font-weight: 400;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+/* Hva som går ut snart: gul, som "Bruk snart"-kortene */
+.option-text .soon-names {
+  color: var(--warn-text);
+}
+
+/* Bryter (av/på): grå, grønn når den er på */
+.switch {
+  position: relative;
+  flex-shrink: 0;
+  width: 44px;
+  height: 26px;
+  border-radius: 999px;
+  background: var(--border);
+  transition: background 0.2s;
+}
+
+.switch::after {
+  content: "";
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 3px rgb(0 0 0 / 0.25);
+  transition: transform 0.2s;
+}
+
+.option-row[aria-pressed="true"] .switch {
+  background: var(--accent);
+}
+
+.option-row[aria-pressed="true"] .switch::after {
+  transform: translateX(18px);
+}
+
+.option-chevron {
+  flex-shrink: 0;
+  color: var(--muted);
+  font-size: 1.4rem;
+  line-height: 1;
+}
+
+/* − 4 pers. + : litt større knapper */
+.option-row .servings {
+  gap: 6px;
+}
+
+.option-row .servings button {
+  width: 34px;
+  height: 34px;
+  border: 1px solid var(--border);
+  border-radius: 50%;
+  background: var(--bg);
+  color: var(--text);
+  font: inherit;
+  font-size: 1.1rem;
+  cursor: pointer;
+}
+
+.option-row #servings-text {
+  min-width: 3.8em;
+  color: var(--text);
+  text-align: center;
+}
+
+.options-dialog .dialog-buttons button {
+  padding: 12px;
+  border-radius: 12px;
+  font: inherit;
+  font-weight: 700;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .switch,
+  .switch::after {
     transition: none;
   }
 }

@@ -368,48 +368,55 @@
 
   <!-- Valg for forslagene: ønsker, porsjoner og "Har alltid".
        Mobil: glir opp nedenfra. PC: vindu i midten. -->
-  <dialog id="options-dialog" class="recipe-dialog sheet">
+  <dialog id="options-dialog" class="recipe-dialog sheet options-dialog">
     <div class="add-header">
-      <h2>Valg</h2>
+      <!-- Overskriften får fokus når vinduet åpnes – ellers får ✕ en fokusring
+           (og på mobil skal ikke tastaturet sprette opp for ønskefeltet) -->
+      <h2 tabindex="-1" autofocus>Valg</h2>
       <button id="options-close" class="close-button" type="button" aria-label="Lukk">✕</button>
     </div>
 
     <!-- Fritt ønske til AI-en, f.eks. "noe med kylling" eller "barnevennlig" -->
-    <div class="options-section">
-      <label class="options-title" for="meal-wish">Eget ønske</label>
-      <input id="meal-wish" class="meal-wish" type="text" maxlength="150" enterkeyhint="done"
-        autocomplete="off" placeholder="F.eks. noe asiatisk, med kylling, barnevennlig">
+    <label class="options-label" for="meal-wish">Noe spesielt du har lyst på?</label>
+    <input id="meal-wish" class="meal-wish" type="text" maxlength="150" enterkeyhint="done"
+      autocomplete="off" placeholder="F.eks. asiatisk, kylling, barnevennlig">
+
+    <!-- Ønsker: én bryter (av/på) per linje -->
+    <div id="meal-extras" class="options-group" role="group" aria-label="Ønsker">
+      <button type="button" class="option-row" data-extra="rask" aria-pressed="false">
+        <span class="option-text">Rask<small>Under 30 minutter</small></span>
+        <span class="switch" aria-hidden="true"></span>
+      </button>
+      <button type="button" class="option-row" data-extra="vegetar" aria-pressed="false">
+        <span class="option-text">Vegetar<small>Uten kjøtt og fisk</small></span>
+        <span class="switch" aria-hidden="true"></span>
+      </button>
+      <button type="button" class="option-row" data-extra="bare" aria-pressed="false">
+        <span class="option-text">Bare det jeg har<small>Ingenting må kjøpes</small></span>
+        <span class="switch" aria-hidden="true"></span>
+      </button>
+      <!-- På: AI-en bruker det som går ut snart i så mange retter som mulig. Av: ikke nevnt.
+           Vises bare når noe går ut snart. -->
+      <button type="button" class="option-row" data-extra="snart" aria-pressed="true" hidden>
+        <span class="option-text">Bruk det som snart går ut<small id="soon-names" class="soon-names"></small></span>
+        <span class="switch" aria-hidden="true"></span>
+      </button>
     </div>
 
-    <div class="options-section">
-      <p class="options-title">Ønsker</p>
-      <div id="meal-extras" class="chips" role="group" aria-label="Ønsker">
-        <button type="button" data-extra="rask" aria-pressed="false">Rask</button>
-        <button type="button" data-extra="vegetar" aria-pressed="false">Vegetar</button>
-        <button type="button" data-extra="bare" aria-pressed="false">Bare det jeg har</button>
-        <!-- På: AI-en bruker det som går ut snart i så mange retter som mulig. Av: ikke nevnt. -->
-        <button type="button" data-extra="snart" aria-pressed="true" hidden>Bruk det som snart går ut</button>
+    <div class="options-group">
+      <div class="option-row">
+        <span class="option-text">Porsjoner</span>
+        <span class="servings" role="group" aria-label="Porsjoner">
+          <button type="button" id="servings-minus" aria-label="Færre porsjoner">−</button>
+          <span id="servings-text">4 pers.</span>
+          <button type="button" id="servings-plus" aria-label="Flere porsjoner">+</button>
+        </span>
       </div>
-      <!-- Hvilke varer som går ut snart -->
-      <p id="soon-names" class="hint soon-names" hidden></p>
-    </div>
-
-    <div class="options-section options-row">
-      <p class="options-title">Porsjoner</p>
-      <span class="servings" role="group" aria-label="Porsjoner">
-        <button type="button" id="servings-minus" aria-label="Færre porsjoner">−</button>
-        <span id="servings-text">4 pers.</span>
-        <button type="button" id="servings-plus" aria-label="Flere porsjoner">+</button>
-      </span>
-    </div>
-
-    <!-- Basisvarer som aldri regnes som "mangler" -->
-    <div class="options-section">
-      <p class="options-title">Har alltid</p>
-      <p class="basics-line">
-        <span class="basics-summary"><span id="basics-text"></span></span>
-        <button id="basics-edit" class="text-button" type="button">Endre</button>
-      </p>
+      <!-- Basisvarer som aldri regnes som "mangler". Trykk for å endre. -->
+      <button id="basics-edit" type="button" class="option-row">
+        <span class="option-text">Har alltid hjemme<small id="basics-text"></small></span>
+        <span class="option-chevron" aria-hidden="true">›</span>
+      </button>
     </div>
 
     <div class="dialog-buttons">
