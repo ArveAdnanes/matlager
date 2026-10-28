@@ -2149,10 +2149,10 @@ body.dragging {
 }
 
 @media (max-width: 899px) {
-  /* Avstand under menyen: plass til streken nederst på iPhone,
-     og minst 12px så knappene ikke havner i de runde hjørnene */
+  /* Avstand under menyen. iPhone: litt mindre enn hele området til streken
+     nederst (34 px), så menyen ikke står så høyt. Ellers 6 px. */
   :root {
-    --nav-bottom: max(12px, env(safe-area-inset-bottom, 0px));
+    --nav-bottom: max(6px, calc(env(safe-area-inset-bottom, 0px) - 14px));
   }
 
   /* Plass nederst til menyen */
