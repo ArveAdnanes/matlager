@@ -2498,3 +2498,232 @@ label.options-title {
 .recipe-list li.swiping .recipe-remove {
   display: none;
 }
+
+/* ---------- Introduksjon (intro.js) ---------- */
+/* Hele skjermen: mørk hinne (SVG med hull), lys kant rundt hullene, og boblen */
+.intro {
+  position: fixed;
+  inset: 0;
+  z-index: 100; /* over topplinjen, menyen og +-knappene */
+  animation: intro-fade 0.25s ease-out;
+}
+
+@keyframes intro-fade {
+  from { opacity: 0; }
+}
+
+.intro-shade {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.intro-shade > rect {
+  fill: rgb(10 14 12 / 0.72);
+}
+
+/* Hullene glir fra ett steg til det neste */
+#intro-holes rect {
+  fill: black;
+  transition: x 0.35s ease, y 0.35s ease, width 0.35s ease, height 0.35s ease, rx 0.35s ease;
+}
+
+/* Lys kant rundt det som lyser opp – glir sammen med hullet */
+.intro-ring {
+  position: fixed;
+  box-shadow: 0 0 0 2px rgb(255 255 255 / 0.9), 0 0 18px 4px rgb(255 255 255 / 0.35);
+  pointer-events: none;
+  transition: left 0.35s ease, top 0.35s ease, width 0.35s ease, height 0.35s ease, border-radius 0.35s ease;
+  animation: intro-pulse 1.6s ease-in-out infinite alternate;
+}
+
+@keyframes intro-pulse {
+  to { box-shadow: 0 0 0 2px rgb(255 255 255 / 0.9), 0 0 26px 8px rgb(255 255 255 / 0.2); }
+}
+
+/* Boblen med forklaringen */
+.intro-bubble {
+  position: fixed;
+  width: min(calc(100vw - 24px), 330px);
+  padding: 16px 16px 12px;
+  border-radius: 16px;
+  background: var(--card);
+  color: var(--text);
+  box-shadow: 0 12px 34px rgb(0 0 0 / 0.35);
+  transition: top 0.35s ease, left 0.35s ease;
+}
+
+/* Teksten tones inn for hvert steg */
+.intro-bubble.fade > :not(.intro-arrow) {
+  animation: intro-text-in 0.3s ease-out;
+}
+
+@keyframes intro-text-in {
+  from { opacity: 0; transform: translateY(4px); }
+}
+
+/* Pil som peker opp (boblen under) eller ned (boblen over) */
+.intro-arrow {
+  position: absolute;
+  width: 16px;
+  height: 16px;
+  margin-left: -8px;
+  background: var(--card);
+  transform: rotate(45deg);
+  transition: left 0.35s ease;
+}
+
+.intro-arrow.up {
+  top: -7px;
+  border-top-left-radius: 3px;
+}
+
+.intro-arrow.down {
+  bottom: -7px;
+  border-bottom-right-radius: 3px;
+}
+
+/* ✕ øverst til høyre */
+.intro-close {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--muted);
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.intro-close:hover {
+  background: var(--bg);
+  color: var(--text);
+}
+
+/* "2 av 5" over tittelen */
+.intro-count {
+  margin: 0 0 2px;
+  color: var(--accent);
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.intro-bubble h2 {
+  margin: 0 0 6px;
+  padding-right: 24px; /* plass til ✕ */
+  font-size: 1.1rem;
+  font-weight: 800;
+}
+
+.intro-text {
+  margin: 0 0 14px;
+  color: var(--muted);
+  font-size: 0.95rem;
+  line-height: 1.45;
+}
+
+/* Velkomsten: midt på, med logo, litt større og sentrert */
+.intro-bubble.welcome {
+  width: min(calc(100vw - 32px), 340px);
+  padding: 24px 20px 16px;
+  text-align: center;
+}
+
+.intro-bubble.welcome h2 {
+  padding: 0;
+  font-size: 1.3rem;
+}
+
+.intro-logo {
+  display: block;
+  width: 64px;
+  height: 64px;
+  margin: 0 auto 12px;
+}
+
+/* Prikker til venstre, Tilbake og Neste til høyre */
+.intro-footer {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.intro-dots {
+  display: flex;
+  flex: 1;
+  gap: 5px;
+}
+
+.intro-bubble.welcome .intro-footer {
+  justify-content: center;
+}
+
+.intro-bubble.welcome .intro-dots {
+  display: none;
+}
+
+.intro-bubble.welcome .intro-back,
+.intro-bubble.welcome .intro-next {
+  flex: 1;
+}
+
+.intro-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 999px;
+  background: var(--border);
+  transition: width 0.2s, background 0.2s;
+}
+
+.intro-dot.current {
+  width: 18px;
+  background: var(--accent);
+}
+
+.intro-back,
+.intro-next {
+  padding: 9px 14px;
+  border: none;
+  border-radius: 10px;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.intro-back {
+  background: transparent;
+  color: var(--muted);
+}
+
+.intro-back:hover {
+  color: var(--text);
+}
+
+.intro-next {
+  background: var(--accent);
+  color: #fff;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .intro,
+  .intro-ring,
+  .intro-bubble.fade > * {
+    animation: none;
+  }
+
+  .intro-bubble,
+  .intro-arrow,
+  .intro-ring,
+  #intro-holes rect {
+    transition: none;
+  }
+}

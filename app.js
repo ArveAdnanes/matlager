@@ -28,6 +28,7 @@ import {
   closeRecipesView,
 } from "./recipes.js";
 import { initScan } from "./scan.js";
+import { showIntro } from "./intro.js";
 
 // Der varene lå lagret i nettleseren før vi tok i bruk Firebase
 const LOCAL_KEY = "matlager";
@@ -126,6 +127,36 @@ let isDemo = false;
 // like mange dager fram som det har gått siden, så "går ut i morgen" alltid er
 // i morgen. Endres hvis demodataene legges inn på nytt.
 const DEMO_SEEDED = new Date(2026, 9, 28); // 28. oktober 2026 (måned 9 = oktober)
+
+// Introduksjonen vises automatisk én gang per bruker på denne enheten for nye
+// brukere (ingen varer ennå) – og for demobrukeren hver gang noen logger inn
+const INTRO_KEY = "matlager-intro-";
+let justSignedIn = false; // logget inn med skjemaet nå (ikke husket fra sist)
+
+function maybeShowIntro(username) {
+  const demoLogin = isDemo && justSignedIn;
+  justSignedIn = false;
+  if (demoLogin) {
+    startIntro();
+    return;
+  }
+  if (readSetting(INTRO_KEY + username)) return;
+  if (!isDemo && items.length > 0) return; // har brukt appen før
+  startIntro(() => saveSetting(INTRO_KEY + username, "1"));
+}
+
+// Introduksjonen lyser opp knapper i varevisningen – sørg for at den vises
+function startIntro(done) {
+  closeRecipesView();
+  if (!wideScreen.matches && addCard.open) addCard.close();
+  window.scrollTo(0, 0);
+  showIntro({ demo: isDemo, done, openRecipes: openRecipesView, closeRecipes: closeRecipesView });
+}
+
+document.getElementById("show-intro").addEventListener("click", () => {
+  menu.open = false;
+  startIntro();
+});
 
 function shiftDemoDate(expires) {
   if (!expires) return expires;
@@ -1714,12 +1745,18 @@ watchUser((user) => {
     changePasswordBtn.hidden = isDemo;
 
     if (!isDemo) migrateLocalItems();
+    let firstItems = true;
     stopWatchingItems = watchItems((newItems) => {
       items = isDemo
         ? newItems.map((item) => ({ ...item, expires: shiftDemoDate(item.expires) }))
         : newItems;
       render();
       setRecipeItems(items); // oppskriftene sjekkes mot varene
+      if (firstItems) {
+        firstItems = false;
+        // Litt pause, så kategoriene og "Bruk snart" er tegnet før de lyses opp
+        setTimeout(() => maybeShowIntro(username), 600);
+      }
     }, showError);
     stopWatchingHistory = watchHistory((newHistory) => {
       nameHistory = newHistory;
@@ -1830,9 +1867,13 @@ loginForm.addEventListener("submit", (event) => {
       })
       .catch((error) => showLoginError(authErrorMessage(error)));
   } else {
+    justSignedIn = true; // settes før, fordi innloggingen meldes før .then
     signIn(credentials.username, credentials.password)
       .then(() => loginForm.reset())
-      .catch((error) => showLoginError(authErrorMessage(error)));
+      .catch((error) => {
+        justSignedIn = false;
+        showLoginError(authErrorMessage(error));
+      });
   }
 });
 

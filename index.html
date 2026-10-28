@@ -110,6 +110,7 @@
                 </button>
               </div>
             </div>
+            <button id="show-intro" type="button">Vis introduksjon</button>
             <button id="change-password" type="button">Bytt passord</button>
             <button id="logout" type="button">Logg ut</button>
           </div>
@@ -335,6 +336,35 @@
     <ul id="suggestions" class="recipe-list"></ul>
     <button id="clear-suggestions" class="text-button clear-suggestions" type="button" hidden>Fjern forslagene</button>
   </section>
+
+  <!-- Introduksjon (intro.js): mørk hinne med "hull" der knappene som
+       forklares er, og en liten boble med tekst ved siden av -->
+  <div id="intro" class="intro" hidden>
+    <svg class="intro-shade" aria-hidden="true">
+      <defs>
+        <mask id="intro-mask">
+          <rect width="100%" height="100%" fill="white"/>
+          <g id="intro-holes"></g>
+        </mask>
+      </defs>
+      <rect width="100%" height="100%" mask="url(#intro-mask)"/>
+    </svg>
+    <div id="intro-rings"></div>
+    <div id="intro-bubble" class="intro-bubble" role="dialog" aria-modal="true" aria-labelledby="intro-title" aria-describedby="intro-text">
+      <!-- Pil som peker på det som lyser opp (over eller under boblen) -->
+      <span id="intro-arrow" class="intro-arrow" aria-hidden="true" hidden></span>
+      <button type="button" id="intro-close" class="intro-close" aria-label="Avslutt introduksjonen" title="Avslutt">✕</button>
+      <img id="intro-logo" class="intro-logo" src="icons/icon.svg" alt="" hidden>
+      <p id="intro-count" class="intro-count"></p>
+      <h2 id="intro-title"></h2>
+      <p id="intro-text" class="intro-text"></p>
+      <div class="intro-footer">
+        <div id="intro-dots" class="intro-dots" aria-hidden="true"></div>
+        <button type="button" id="intro-back" class="intro-back">Tilbake</button>
+        <button type="button" id="intro-next" class="intro-next">Neste</button>
+      </div>
+    </div>
+  </div>
 
   <!-- Valg for forslagene: ønsker, porsjoner og "Har alltid".
        Mobil: glir opp nedenfra. PC: vindu i midten. -->

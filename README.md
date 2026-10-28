@@ -12,7 +12,7 @@ Logg inn med demobrukeren for å se hvordan appen ser ut når den er i bruk:
 
 | Brukernavn | Passord |
 | --- | --- |
-| `demo` | `matlager-demo` |
+| `demo` | `matlager` |
 
 Demobrukeren har kategorier og varer i alle tre stedene, noen varer som går ut snart, og tre favorittoppskrifter. Du kan se deg rundt og prøve «Hva kan jeg lage?», men **endringer lagres ikke**. Vil du bruke appen selv, lager du din egen bruker på innloggingssiden.
 
@@ -143,5 +143,5 @@ Appen publiseres på **GitHub Pages** med arbeidsflyten i `.github/workflows/sta
 - **Glemt passord:** Det finnes ingen tilbakestilling på e-post. Passordet kan endres i appen når du er innlogget, eller brukeren kan slettes i Firebase-konsollen.
 - **Brukernavn** kan bare inneholde a–z, 0–9, `.`, `_` og `-`. Bokstavene æ, ø og å går ikke.
 - **AI-kvoten** telles i appen. En bruker som går rundt appen og skriver direkte til sin egen database, kan i prinsippet nullstille sin egen teller. Googles daglige grense for prosjektet gjelder uansett.
-- **Demobrukeren** er sperret for endringer i databasen, men Firebase kan ikke hindre noen i å bytte passordet til selve kontoen. Slutter `demo` / `matlager-demo` å virke, settes passordet tilbake i Firebase-konsollen under *Authentication → Users*. Demobrukeren deler også én AI-grense på 15 søk per dag med alle som prøver den.
+- **Demobrukeren** er sperret for endringer i databasen, men Firebase kan ikke hindre noen i å bytte passordet til selve kontoen. Slutter `demo` / `matlager` å virke, settes passordet tilbake i Firebase-konsollen under *Authentication → Users*. Demobrukeren deler også én AI-grense på 15 søk per dag med alle som prøver den.
 - **Utløpsdatoer fra bilde** er anslag når datoen ikke står på bildet. De er merket «anslått», så sjekk dem.
