@@ -4,6 +4,10 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Matlager</title>
+  <!-- Nunito: avrundet, vennlig skrift. Uten nett brukes systemskriften. -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap">
   <link rel="stylesheet" href="style.css">
 
   <!-- App-ikon og PWA (installere på hjemskjermen) -->
@@ -15,7 +19,7 @@
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <!-- Farge på statuslinjen på mobil – samme som bakgrunnen i lys/mørk modus -->
-  <meta name="theme-color" content="#f4f6f4" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#f7f5ef" media="(prefers-color-scheme: light)">
   <meta name="theme-color" content="#141a17" media="(prefers-color-scheme: dark)">
 
   <!-- Sett valgt tema (lys/mørk) før siden tegnes, så den ikke blinker -->
@@ -174,6 +178,11 @@
         <svg class="fab-icon" width="28" height="28" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg><span class="fab-label">Legg til vare</span>
       </button>
 
+      <!-- Mobil: mindre kameraknapp over +-knappen – rett til bilde/kvittering (scan.js). Skjult på PC. -->
+      <button id="scan-fab" class="scan-fab" type="button" aria-label="Legg til fra bilde" title="Legg til fra bilde eller kvittering">
+        <svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h3l2-3h6l2 3h3a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z"/><circle cx="12" cy="13" r="3.5"/></g></svg>
+      </button>
+
       <!-- "Legg til vare". Mobil: vindu som glir opp fra bunnen.
            PC: ligger alltid åpent her i venstre kolonne. -->
       <dialog id="add-card" class="add-card">
@@ -235,30 +244,42 @@
         </form>
       </dialog>
 
-      <!-- Varer som går ut snart, fra alle lagringssteder. Fylles av app.js -->
+      <!-- "Bruk snart": kort for varer som har gått ut eller går ut snart,
+           fra alle lagringssteder. Fylles av app.js -->
       <section id="expiring" class="expiring" hidden>
-        <!-- Lukket som standard – åpnes automatisk hvis noe har gått ut -->
-        <details>
-          <summary>Utløpsdato <span id="expiring-count"></span></summary>
-          <ul id="expiring-list"></ul>
-        </details>
+        <!-- Trykk for å skjule/vise kortene – valget huskes -->
+        <button id="expiring-toggle" class="expiring-toggle" type="button" aria-expanded="true" aria-controls="expiring-list">
+          <span>Bruk snart <span id="expiring-count"></span></span>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+        <ul id="expiring-list" class="expiring-cards"></ul>
       </section>
 
     </aside>
 
     <!-- Listen fylles av app.js -->
     <main class="list-area">
-      <!-- Sortering av listen -->
-      <div class="list-toolbar">
-        <!-- Lag kategori i fanen du står i (skjult mens man søker) -->
-        <button id="new-category" class="text-button" type="button">+ Ny kategori</button>
-        <!-- "3 treff i alle steder" når man søker -->
-        <p id="search-info" class="search-info" hidden></p>
-        <select id="sort" aria-label="Sorter">
-          <option value="expires">Sorter: Utløpsdato</option>
-          <option value="name">Sorter: Navn (A–Å)</option>
-          <option value="added">Sorter: Sist lagt til</option>
-        </select>
+      <!-- Tittellinje: hvor du er ("Fryser · 12 varer"), eller "3 treff" under søk.
+           Til høyre: liten meny med sortering og "+ Ny kategori". Fylles av app.js -->
+      <div id="list-header" class="list-header">
+        <span id="list-icon" class="list-icon"></span>
+        <h2 class="list-title"><span id="list-title"></span> <span id="list-count" class="list-count"></span></h2>
+
+        <details id="list-menu" class="menu list-menu">
+          <summary class="list-menu-button" aria-label="Sortering og kategorier" title="Sortering og kategorier">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/></g></svg>
+          </summary>
+          <div class="menu-panel">
+            <p class="menu-label">Sorter etter</p>
+            <div id="sort" class="sort-options" role="group" aria-label="Sorter">
+              <button type="button" data-sort="expires">Utløpsdato</button>
+              <button type="button" data-sort="name">Navn (A–Å)</button>
+              <button type="button" data-sort="added">Sist lagt til</button>
+            </div>
+            <!-- Lag kategori i fanen du står i (skjult mens man søker) -->
+            <button id="new-category" type="button">+ Ny kategori</button>
+          </div>
+        </details>
       </div>
       <ul id="list"></ul>
       <p id="empty" class="empty">Ingen varer her ennå.</p>
@@ -276,10 +297,11 @@
 
   <!-- "Hva kan jeg lage?" – AI-forslag ut fra varene. Vises i stedet for varene (recipes.js) -->
   <section id="recipes" class="recipes" hidden>
+    <!-- [gryte] Hva kan jeg lage?   (← Varer bare på PC) – som tittellinjen over varene -->
     <div class="recipes-header">
-      <button id="recipes-back" class="text-button" type="button">← Varer</button>
+      <span class="recipes-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 11h16v5a4 4 0 0 1-4 4H8a4 4 0 0 1-4-4z"/><path d="M2 11h2M20 11h2M9 7.5c0-1 1-1.5 1-2.5M14 7.5c0-1 1-1.5 1-2.5"/></g></svg></span>
       <h2>Hva kan jeg lage?</h2>
-      <span class="header-spacer"></span>
+      <button id="recipes-back" class="text-button" type="button">← Varer</button>
     </div>
 
     <!-- Hva slags mat (én), og ekstra ønsker (av/på) -->
@@ -316,6 +338,13 @@
     <div class="add-header">
       <h2>Valg</h2>
       <button id="options-close" class="close-button" type="button" aria-label="Lukk">✕</button>
+    </div>
+
+    <!-- Fritt ønske til AI-en, f.eks. "noe med kylling" eller "barnevennlig" -->
+    <div class="options-section">
+      <label class="options-title" for="meal-wish">Eget ønske</label>
+      <input id="meal-wish" class="meal-wish" type="text" maxlength="150" enterkeyhint="done"
+        autocomplete="off" placeholder="F.eks. noe asiatisk, med kylling, barnevennlig">
     </div>
 
     <div class="options-section">

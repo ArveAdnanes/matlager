@@ -107,9 +107,14 @@ let current = LOCATIONS[readSetting(TAB_KEY)] ? readSetting(TAB_KEY) : "fryser";
 // Elementer fra index.html vi trenger
 const listEl = document.getElementById("list");
 const emptyEl = document.getElementById("empty");
-const sortSelect = document.getElementById("sort");
+const sortButtons = document.querySelectorAll("#sort [data-sort]");
 const searchClear = document.getElementById("search-clear");
-const searchInfo = document.getElementById("search-info");
+// Tittellinjen over listen: "Fryser 12 varer" + menyen med sortering
+const listHeader = document.getElementById("list-header");
+const listIcon = document.getElementById("list-icon");
+const listTitle = document.getElementById("list-title");
+const listCount = document.getElementById("list-count");
+const listMenu = document.getElementById("list-menu");
 const offlineBanner = document.getElementById("offline");
 const editDelete = document.getElementById("edit-delete");
 
@@ -125,6 +130,7 @@ const EMPTY_TEXT = {
 const form = document.getElementById("add-form");
 const addCard = document.getElementById("add-card"); // <dialog> med skjemaet
 const addOpenBtn = document.getElementById("add-open");
+const scanFab = document.getElementById("scan-fab"); // kameraknappen over + (mobil)
 const addCloseBtn = document.getElementById("add-close");
 const addConfirm = document.getElementById("add-confirm");
 const locationButtons = document.querySelectorAll("[data-add-location]");
@@ -141,6 +147,7 @@ const searchInput = document.getElementById("search");
 const expiringSection = document.getElementById("expiring");
 const expiringCount = document.getElementById("expiring-count");
 const expiringList = document.getElementById("expiring-list");
+const expiringToggle = document.getElementById("expiring-toggle");
 const tabs = document.querySelectorAll(".tab");
 
 // Melding nederst ("… ble slettet – Angre")
@@ -247,6 +254,7 @@ function render() {
   const searching = query !== "";
   addCard.hidden = searching; // skjul "legg til" mens man søker
   addOpenBtn.hidden = searching;
+  scanFab.hidden = searching;
   document.body.classList.toggle("searching", searching);
 
   const visible = items
@@ -262,6 +270,7 @@ function render() {
   } else {
     renderGroups(visible);
   }
+  markGroupEdges();
 
   // Tom liste, f.eks. "Ingen tørrvarer ennå."
   emptyEl.textContent = searching
@@ -270,14 +279,36 @@ function render() {
   // Har fanen kategorier, vises overskriftene selv om den er tom
   emptyEl.hidden = visible.length > 0 || (!searching && categoriesFor(current).length > 0);
   newCategoryBtn.hidden = searching;
-
-  // Søk: antall treff og knapp for å tømme
   searchClear.hidden = !searching;
-  searchInfo.hidden = !searching || visible.length === 0;
-  searchInfo.textContent = `${visible.length} treff i alle steder`;
+  renderListHeader(searching, visible.length);
 
   renderExpiring(searching);
   renderCategoryChips(); // kategoriene i "Legg til" kan ha endret seg
+}
+
+// Tittellinjen: "Fryser 12 varer" med stedets ikon og farge,
+// eller "3 treff i alle steder" mens man søker
+function renderListHeader(searching, count) {
+  listHeader.dataset.location = searching ? "" : current;
+  listHeader.classList.toggle("searching", searching);
+  listIcon.innerHTML = searching ? "" : ICONS[current];
+  listTitle.textContent = searching ? `${count} treff` : LOCATIONS[current];
+  listCount.textContent = searching
+    ? "i alle steder"
+    : `${count} ${count === 1 ? "vare" : "varer"}`;
+}
+
+// Varene i hver gruppe vises som ett kort: første og siste rad får runde hjørner
+function markGroupEdges() {
+  let previous = null;
+  for (const li of listEl.children) {
+    const isRow = li.classList.contains("swipe-row");
+    const previousIsRow = previous?.classList.contains("swipe-row");
+    if (isRow && !previousIsRow) li.classList.add("first");
+    if (previousIsRow && !isRow) previous.classList.add("last");
+    previous = li;
+  }
+  if (previous?.classList.contains("swipe-row")) previous.classList.add("last");
 }
 
 // Kategoriene for et sted, i valgt rekkefølge (order). Kategorier uten
@@ -417,6 +448,13 @@ function createItemRow(item, searching) {
   name.textContent = item.name;
   info.append(name);
 
+  // Går ut snart / har gått ut: farget merkelapp ved navnet, f.eks. "I morgen"
+  const expiry = expiryInfo(item);
+  if (expiry?.status) {
+    row.classList.add(expiry.status);
+    name.append(" ", createBadge(expiry));
+  }
+
   // Notat (én linje, kuttes med … hvis det er langt)
   if (item.note) {
     const note = document.createElement("small");
@@ -425,17 +463,13 @@ function createItemRow(item, searching) {
     info.append(note);
   }
 
-  // Infolinje under navnet, f.eks. "Går ut 24. okt"
+  // Infolinje under navnet, f.eks. "24. okt." (datoen vises bare når den ikke er nær)
   const meta = [];
   if (searching) {
     meta.push(LOCATIONS[item.location]); // vis hvor varen ligger
     if (categoryName(item.category)) meta.push(categoryName(item.category));
   }
-  const expiry = expiryInfo(item);
-  if (expiry) {
-    meta.push(expiry.text);
-    if (expiry.status) row.classList.add(expiry.status);
-  }
+  if (expiry && !expiry.status) meta.push(expiry.date);
   if (meta.length) {
     const small = document.createElement("small");
     small.className = "item-meta";
@@ -493,24 +527,39 @@ function expiryInfo(item) {
     month: "short",
     year: "numeric",
   });
+  // Kort dato under navnet: "24. okt." – året bare når det ikke er i år
+  const shortDate = date.toLocaleDateString("nb-NO", {
+    day: "numeric",
+    month: "short",
+    ...(y !== today.getFullYear() && { year: "numeric" }),
+  });
 
-  if (daysLeft === -1) return { text: "Gikk ut i går", status: "expired", daysLeft };
-  if (daysLeft < 0) return { text: `Gikk ut ${pretty}`, status: "expired", daysLeft };
-  if (daysLeft === 0) return { text: "Går ut i dag", status: "soon", daysLeft };
-  if (daysLeft === 1) return { text: "Går ut i morgen", status: "soon", daysLeft };
-  if (daysLeft <= EXPIRING_DAYS) return { text: `Går ut ${pretty}`, status: "soon", daysLeft };
-  return { text: `Går ut ${pretty}`, status: null, daysLeft };
+  // text = hele setningen, short = merkelappen ("I morgen"), date = kort dato
+  const info = (text, short, status) => ({ text, short, status, daysLeft, date: shortDate });
+  if (daysLeft === -1) return info("Gikk ut i går", "Gikk ut", "expired");
+  if (daysLeft < 0) return info(`Gikk ut ${pretty}`, "Gikk ut", "expired");
+  if (daysLeft === 0) return info("Går ut i dag", "I dag", "soon");
+  if (daysLeft === 1) return info("Går ut i morgen", "I morgen", "soon");
+  if (daysLeft <= EXPIRING_DAYS) return info(`Går ut ${pretty}`, `${daysLeft} dager`, "soon");
+  return info(`Går ut ${pretty}`, shortDate, null);
+}
+
+// Farget merkelapp: rød "Gikk ut", gul "I dag" / "I morgen" / "2 dager"
+function createBadge(expiry) {
+  const badge = document.createElement("span");
+  badge.className = `badge ${expiry.status}`;
+  badge.textContent = expiry.short;
+  badge.title = expiry.text;
+  return badge;
 }
 
 // Hvor mange dager før utløp en vare regnes som "går snart ut" (gul farge)
 const EXPIRING_DAYS = 3;
 
-// Hadde boksen utgåtte varer sist den ble tegnet? (null = ikke tegnet ennå)
-let lastHasExpired = null;
 // Antall utgåtte varer nå (lagres sammen med valget ditt)
 let expiredCount = 0;
 
-// Om du selv har lukket/åpnet utløpsboksen: { open, expired } (null = ikke valgt)
+// Om du selv har skjult/vist "Bruk snart": { open, expired } (null = ikke valgt)
 const EXPIRING_KEY = "matlager-utlop";
 
 function readExpiringChoice() {
@@ -521,17 +570,20 @@ function readExpiringChoice() {
   }
 }
 
-// Trykk på "Utløpsdato": husk om boksen nå er åpen eller lukket
-expiringSection.querySelector("summary").addEventListener("click", () => {
-  // Vent til nettleseren har åpnet/lukket boksen
-  setTimeout(() => {
-    const open = expiringSection.querySelector("details").open;
-    saveSetting(EXPIRING_KEY, JSON.stringify({ open, expired: expiredCount }));
-  }, 0);
+function setExpiringOpen(open) {
+  expiringSection.classList.toggle("closed", !open);
+  expiringToggle.setAttribute("aria-expanded", open);
+}
+
+// Trykk på "Bruk snart": skjul/vis kortene og husk valget
+expiringToggle.addEventListener("click", () => {
+  const open = expiringSection.classList.contains("closed");
+  setExpiringOpen(open);
+  saveSetting(EXPIRING_KEY, JSON.stringify({ open, expired: expiredCount }));
 });
 
-// Tegn utløpsboksen: varer fra alle steder, delt i to grupper –
-// "Har gått ut" og "Går snart ut" (innen EXPIRING_DAYS dager)
+// Tegn "Bruk snart": ett kort per vare fra alle steder – de som har gått ut
+// først, så de som går ut innen EXPIRING_DAYS dager
 function renderExpiring(searching) {
   const withDate = items.filter((item) => item.expires).sort(compareItems);
   const expired = withDate.filter((item) => expiryInfo(item).daysLeft < 0);
@@ -544,49 +596,38 @@ function renderExpiring(searching) {
   expiringSection.hidden = searching || total === 0;
   expiringSection.classList.toggle("has-expired", expired.length > 0);
 
-  // Har du selv lukket eller åpnet boksen, huskes det (også etter oppdatering av
-  // siden) – helt til flere varer har gått ut enn da du valgte. Ellers åpnes
-  // boksen når noe har gått ut, og lukkes når alt er i orden igjen.
-  const details = expiringSection.querySelector("details");
-  const hasExpired = expired.length > 0;
+  // Har du selv skjult eller vist kortene, huskes det (også etter oppdatering av
+  // siden) – helt til flere varer har gått ut enn da du valgte. Ellers vises de.
   const choice = readExpiringChoice();
-  if (choice && expired.length <= choice.expired) {
-    details.open = choice.open;
-  } else if (hasExpired !== lastHasExpired) {
-    details.open = hasExpired;
-  }
-  lastHasExpired = hasExpired;
+  setExpiringOpen(choice && expired.length <= choice.expired ? choice.open : true);
   expiredCount = expired.length;
   expiringCount.textContent = `(${total})`;
   expiringList.innerHTML = "";
 
-  addExpiringGroup("Har gått ut", "expired", expired);
-  addExpiringGroup("Går snart ut", "soon", soon);
-}
-
-// Én gruppe i utløpsboksen: overskrift + varer (hoppes over hvis tom)
-function addExpiringGroup(title, status, groupItems) {
-  if (groupItems.length === 0) return;
-
-  const heading = document.createElement("li");
-  heading.className = `expiring-heading ${status}`;
-  heading.textContent = `${title} (${groupItems.length})`;
-  expiringList.append(heading);
-
-  for (const item of groupItems) {
+  for (const item of [...expired, ...soon]) {
     const expiry = expiryInfo(item);
     const li = document.createElement("li");
-    li.className = "expiring-item";
-    if (expiry.status) li.classList.add(expiry.status);
-    li.dataset.id = item.id;
+    const card = document.createElement("button");
+    card.type = "button";
+    card.className = `expiring-card ${expiry.status}`;
+    card.dataset.id = item.id;
+    card.dataset.location = item.location; // gir --loc til ikonet
+    card.title = `${item.name} – ${LOCATIONS[item.location]} – ${expiry.text}`;
 
     const name = document.createElement("span");
+    name.className = "expiring-name";
     name.textContent = item.name;
 
-    const meta = document.createElement("small");
-    meta.textContent = `${LOCATIONS[item.location]} · ${expiry.text}`;
+    // Nederst: lite stedsikon til venstre, merkelapp til høyre
+    const footer = document.createElement("span");
+    footer.className = "expiring-footer";
+    const icon = document.createElement("span");
+    icon.className = "loc-icon";
+    icon.innerHTML = ICONS[item.location];
+    footer.append(icon, createBadge(expiry));
 
-    li.append(name, meta);
+    card.append(name, footer);
+    li.append(card);
     expiringList.append(li);
   }
 }
@@ -613,13 +654,22 @@ const SORTERS = {
 
 // Valgt sortering – huskes på denne enheten
 let sortBy = SORTERS[readSetting(SORT_KEY)] ? readSetting(SORT_KEY) : "expires";
-sortSelect.value = sortBy;
 
-sortSelect.addEventListener("change", () => {
-  sortBy = sortSelect.value;
-  saveSetting(SORT_KEY, sortBy);
-  render();
-});
+// Den valgte sorteringen får en hake i menyen
+function markSort() {
+  sortButtons.forEach((btn) => btn.setAttribute("aria-pressed", btn.dataset.sort === sortBy));
+}
+markSort();
+
+sortButtons.forEach((btn) =>
+  btn.addEventListener("click", () => {
+    sortBy = btn.dataset.sort;
+    saveSetting(SORT_KEY, sortBy);
+    markSort();
+    listMenu.open = false;
+    render();
+  })
+);
 
 // "3 stk", "3" eller "" – viser bare det som er fylt ut
 function formatQty(item) {
@@ -1324,9 +1374,9 @@ function endDrag(cancelled) {
 
 // Trykk på en vare i "Går snart ut" åpner redigeringsvinduet
 expiringList.addEventListener("click", (event) => {
-  const li = event.target.closest(".expiring-item");
-  if (!li) return;
-  const item = items.find((i) => i.id === li.dataset.id);
+  const card = event.target.closest(".expiring-card");
+  if (!card) return;
+  const item = items.find((i) => i.id === card.dataset.id);
   if (item) openEdit(item);
 });
 
@@ -1513,7 +1563,10 @@ function openCategoryDialog(category, forAddForm) {
   categoryNameInput.focus();
 }
 
-newCategoryBtn.addEventListener("click", () => openCategoryDialog(null, false));
+newCategoryBtn.addEventListener("click", () => {
+  listMenu.open = false;
+  openCategoryDialog(null, false);
+});
 categoryCancel.addEventListener("click", () => categoryDialog.close());
 
 categoryForm.addEventListener("submit", (event) => {
@@ -1755,15 +1808,16 @@ logoutBtn.addEventListener("click", () => {
 
 // ---------- Meny ----------
 
-// Lukk menyen når man trykker utenfor den
+// Lukk menyene når man trykker utenfor dem
 document.addEventListener("click", (event) => {
   if (menu.open && !menu.contains(event.target)) menu.open = false;
+  if (listMenu.open && !listMenu.contains(event.target)) listMenu.open = false;
 });
 
 // ---------- Tema (Auto / Lys / Mørk) ----------
 
 // Statuslinjefarge på mobil for lyst og mørkt tema
-const THEME_COLORS = { light: "#f4f6f4", dark: "#141a17" };
+const THEME_COLORS = { light: "#f7f5ef", dark: "#141a17" };
 
 function applyTheme(theme) {
   if (theme === "light" || theme === "dark") {

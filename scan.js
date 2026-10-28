@@ -45,11 +45,14 @@ export function initScan(opts) {
 
 // ---------- Velge bilde ----------
 
-// Mobilen spør selv: ta bilde, eller velg fra bilder/filer
-openBtn.addEventListener("click", () => {
+// Mobilen spør selv: ta bilde, eller velg fra bilder/filer.
+// "📷 Fra bilde" i "Legg til", og kameraknappen over + på mobil.
+function pickFile() {
   fileInput.value = ""; // så samme fil kan velges igjen
   fileInput.click();
-});
+}
+openBtn.addEventListener("click", pickFile);
+$("scan-fab").addEventListener("click", pickFile);
 
 fileInput.addEventListener("change", () => {
   if (fileInput.files[0]) handleFile(fileInput.files[0]);

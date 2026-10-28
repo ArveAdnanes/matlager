@@ -20,6 +20,9 @@ const HASH = "#oppskrifter";
 
 // Siste forslag huskes på denne enheten, så de ikke forsvinner når du går tilbake
 const SAVED_KEY = "matlager-forslag";
+// Forslag du har fjernet med ✕ – AI-en blir bedt om å ikke foreslå dem igjen
+const DISMISSED_KEY = "matlager-avvist";
+const MAX_DISMISSED = 30;
 // Er favorittlisten åpen? (huskes på denne enheten)
 const FAVORITES_OPEN_KEY = "matlager-favoritter-apen";
 // "Bruk det som snart går ut" på eller av (huskes på denne enheten)
@@ -35,6 +38,8 @@ let loggedIn = false;
 let openedHere = false; // åpnet med knappen? Da går "Tilbake" tilbake i historikken
 let options = null; // hjelpefunksjoner fra app.js
 let meals = []; // forslagene fra AI-en som vises nå
+let loading = false; // venter på svar fra AI-en (viser plassholdere)
+let dismissed = []; // navn på forslag du har fjernet (de siste MAX_DISMISSED)
 let favorites = []; // lagrede favoritter (fra Firebase)
 let mealType = "middag";
 const extras = new Set(); // "rask", "vegetar", "bare", "snart"
@@ -58,6 +63,7 @@ const extraChips = $("meal-extras");
 const servingsText = $("servings-text");
 const useSoonChip = extraChips.querySelector('[data-extra="snart"]');
 const suggestBtn = $("suggest");
+const wishInput = $("meal-wish");
 const statusEl = $("suggest-status");
 const listEl = $("suggestions");
 const clearBtn = $("clear-suggestions");
@@ -93,6 +99,9 @@ export function initRecipes(opts) {
   try {
     meals = JSON.parse(options.readSetting(SAVED_KEY)) || [];
   } catch {}
+  try {
+    dismissed = JSON.parse(options.readSetting(DISMISSED_KEY)) || [];
+  } catch {}
   favoritesEl.open = options.readSetting(FAVORITES_OPEN_KEY) === "1";
   // "Bruk det som snart går ut" er på med mindre du har slått den av
   if (options.readSetting(USE_SOON_KEY) !== "0") extras.add("snart");
@@ -127,7 +136,9 @@ export function stopRecipes() {
   servings = DEFAULT_SERVINGS;
   favorites = [];
   meals = []; // neste bruker skal ikke se forslagene
+  dismissed = [];
   options.saveSetting(SAVED_KEY, "[]");
+  options.saveSetting(DISMISSED_KEY, "[]");
   syncView();
 }
 
@@ -212,7 +223,8 @@ function renderSummary() {
   if (!options) return; // appen er ikke koblet til ennå
   const soon = soonItems();
   const soonNames = soon.map((i) => i.name).join(", ");
-  const parts = [`${servings} pers.`];
+  const wish = wishInput.value.trim();
+  const parts = wish ? [`«${wish}»`, `${servings} pers.`] : [`${servings} pers.`];
   for (const [key, label] of Object.entries(EXTRA_LABELS)) {
     if (extras.has(key)) parts.push(label);
   }
@@ -342,6 +354,11 @@ function buildPrompt() {
         "Ikke tving det inn i retter der det ikke hører hjemme."
     );
   }
+  // Det brukeren skrev selv veier tyngst
+  const wish = wishInput.value.trim();
+  if (wish) {
+    lines.push(`Mitt ønske for rettene: «${wish}». Dette er viktigst – alle rettene skal passe med ønsket.`);
+  }
   if (extras.has("rask")) lines.push("Hver rett skal ta under 30 minutter.");
   if (extras.has("vegetar")) lines.push("Alle rettene skal være vegetariske.");
   if (extras.has("bare")) {
@@ -352,6 +369,9 @@ function buildPrompt() {
   // Ikke de samme forslagene igjen når man trykker "Flere forslag" (bare de siste 20)
   const seen = [...meals, ...favorites].map((m) => m.name).slice(-20);
   if (seen.length) lines.push(`Ikke foreslå disse, dem har jeg allerede: ${seen.join(", ")}.`);
+  if (dismissed.length) {
+    lines.push(`Ikke foreslå disse heller, dem har jeg valgt bort: ${dismissed.join(", ")}.`);
+  }
   lines.push(
     "",
     `Mengdene skal være for ${servings} ${servings === 1 ? "person" : "personer"}.`,
@@ -369,8 +389,13 @@ suggestBtn.addEventListener("click", async () => {
   suggestBtn.disabled = true;
   suggestBtn.textContent = "Tenker …";
   showStatus("");
+  loading = true;
+  renderRecipes();
+  // Har man forslag fra før, ligger plassholderne langt nede – bla dit
+  if (meals.length) listEl.querySelector(".recipe-skeleton")?.scrollIntoView({ behavior: "smooth", block: "center" });
   try {
     const result = await suggestMeals(buildPrompt());
+    loading = false;
     // Husk type og porsjoner, så de vises riktig senere
     const newMeals = (result.meals || [])
       .filter((m) => m && m.name)
@@ -388,10 +413,21 @@ suggestBtn.addEventListener("click", async () => {
       listEl.querySelector(`[data-index="${firstNew}"]`)?.scrollIntoView({ behavior: "smooth", block: "center" });
     }
   } catch (error) {
+    loading = false;
     showStatus(aiErrorMessage(error), true);
     suggestBtn.disabled = false;
     renderRecipes();
   }
+});
+
+// Ønsket vises i linjen over "Finn forslag" mens man skriver
+wishInput.addEventListener("input", renderSummary);
+
+// Enter i ønskefeltet = "Ferdig"
+wishInput.addEventListener("keydown", (event) => {
+  if (event.key !== "Enter") return;
+  event.preventDefault();
+  optionsDialog.close();
 });
 
 // "Fjern forslagene": start på nytt (favorittene blir liggende)
@@ -452,6 +488,11 @@ function renderRecipes() {
       if (typeOf(meal) === type) listEl.append(createCard(meal, "suggestion", index));
     });
   }
+
+  // Mens AI-en tenker: tre plassholdere nederst
+  if (loading) {
+    for (let i = 0; i < 3; i++) listEl.append(createSkeleton());
+  }
 }
 
 // Kort: navn, kort beskrivelse, hva som mangler, ev. hva som snart går ut
@@ -471,32 +512,95 @@ function createCard(meal, source, index) {
 
   if (meal.description) {
     const description = document.createElement("small");
+    description.className = "recipe-description";
     description.textContent = meal.description;
     button.append(description);
   }
 
-  const status = document.createElement("small");
-  status.className = check.missing.length ? "recipe-missing" : "recipe-ok";
+  // "Mangler: Ris, Fløte" – "Mangler:" i fet skrift
   if (check.missing.length) {
-    // "Mangler:" i fet skrift, så det synes uten å bruke en ny farge
+    const missing = document.createElement("small");
+    missing.className = "recipe-missing";
     const label = document.createElement("strong");
     label.textContent = "Mangler:";
-    status.append(label, ` ${check.missing.map((ing) => ing.name).join(", ")}`);
-  } else {
-    status.textContent = "Du har alt";
+    missing.append(label, ` ${check.missing.map((ing) => ing.name).join(", ")}`);
+    button.append(missing);
   }
-  if (meal.time) status.append(` · ${meal.time}`);
-  button.append(status);
 
+  // Merkelapper nederst: "Du har alt" / "Mangler 2", "Bruker Kjøttdeig", "⏱ 25 min"
+  const badges = document.createElement("span");
+  badges.className = "recipe-badges";
+  badges.append(
+    check.missing.length
+      ? createBadge("missing", `Mangler ${check.missing.length}`)
+      : createBadge("ok", "Du har alt")
+  );
   if (check.soon.length) {
-    button.classList.add("uses-soon");
-    const soonEl = document.createElement("small");
-    soonEl.className = "recipe-soon";
-    soonEl.textContent = `Bruker ${[...new Set(check.soon.map((ing) => ing.item.name))].join(", ")}`;
-    button.append(soonEl);
+    const soonNames = [...new Set(check.soon.map((ing) => ing.item.name))].join(", ");
+    badges.append(createBadge("uses", `Bruker ${soonNames}`));
   }
+  if (meal.time) badges.append(createBadge("neutral", `⏱ ${meal.time}`));
+  button.append(badges);
 
   li.append(button);
+
+  // ✕ øverst i hjørnet: fjern bare dette forslaget (ikke på favoritter)
+  if (source === "suggestion") {
+    const remove = document.createElement("button");
+    remove.type = "button";
+    remove.className = "recipe-remove";
+    remove.dataset.remove = index;
+    remove.textContent = "✕";
+    remove.setAttribute("aria-label", `Fjern ${meal.name}`);
+    remove.title = "Fjern forslaget";
+    li.append(remove);
+  }
+  return li;
+}
+
+// Fjern ett forslag – med "Angre"
+function removeMeal(index) {
+  const meal = meals[index];
+  if (!meal) return;
+  meals = meals.filter((_, i) => i !== index);
+  dismissed = [...dismissed.filter((name) => name !== meal.name), meal.name].slice(-MAX_DISMISSED);
+  saveMeals();
+  renderRecipes();
+  options.showToast(`«${meal.name}» er fjernet`, () => {
+    meals = [...meals.slice(0, index), meal, ...meals.slice(index)];
+    dismissed = dismissed.filter((name) => name !== meal.name);
+    saveMeals();
+    renderRecipes();
+  });
+}
+
+function saveMeals() {
+  options.saveSetting(SAVED_KEY, JSON.stringify(meals));
+  options.saveSetting(DISMISSED_KEY, JSON.stringify(dismissed));
+}
+
+function createBadge(kind, text) {
+  const badge = document.createElement("span");
+  badge.className = `badge ${kind}`;
+  badge.textContent = text;
+  badge.title = text;
+  return badge;
+}
+
+// Plassholder mens AI-en tenker: grå streker i stedet for tekst
+function createSkeleton() {
+  const li = document.createElement("li");
+  li.setAttribute("aria-hidden", "true");
+  const card = document.createElement("div");
+  card.className = "recipe-skeleton"; // ikke .recipe-card – kan ikke trykkes
+  // Navn, beskrivelse, merkelapp
+  for (const width of ["70%", "95%", "30%"]) {
+    const bar = document.createElement("span");
+    bar.className = "skeleton-bar";
+    bar.style.width = width;
+    card.append(bar);
+  }
+  li.append(card);
   return li;
 }
 
@@ -507,6 +611,11 @@ function mealFromCard(card) {
 
 for (const list of [listEl, favoritesList]) {
   list.addEventListener("click", (event) => {
+    const remove = event.target.closest(".recipe-remove");
+    if (remove) {
+      removeMeal(Number(remove.dataset.remove));
+      return;
+    }
     const card = event.target.closest(".recipe-card");
     if (card) openMeal(mealFromCard(card));
   });
