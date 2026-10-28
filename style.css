@@ -1871,9 +1871,15 @@ body.dragging {
 }
 
 @media (max-width: 899px) {
+  /* Avstand under menyen: plass til streken nederst på iPhone,
+     og minst 12px så knappene ikke havner i de runde hjørnene */
+  :root {
+    --nav-bottom: max(12px, env(safe-area-inset-bottom, 0px));
+  }
+
   /* Plass nederst til menyen */
   body {
-    padding-bottom: calc(64px + env(safe-area-inset-bottom, 0px));
+    padding-bottom: calc(60px + var(--nav-bottom));
   }
 
   /* Topplinjen: bare logo og konto. Tema ligger i kontomenyen, oppskrifter i menyen nederst. */
@@ -1898,7 +1904,8 @@ body.dragging {
     bottom: 0;
     z-index: 15;
     display: flex;
-    padding: 4px 4px calc(4px + env(safe-area-inset-bottom, 0px));
+    /* Luft til sidene også, så Fryser og Oppskrifter ikke havner i hjørnene */
+    padding: 6px max(14px, env(safe-area-inset-right, 0px)) var(--nav-bottom) max(14px, env(safe-area-inset-left, 0px));
     background: var(--card);
     border-top: 1px solid var(--border);
   }
@@ -1977,7 +1984,7 @@ body.dragging {
   .add-open {
     position: fixed;
     right: 16px;
-    bottom: calc(76px + env(safe-area-inset-bottom, 0px));
+    bottom: calc(72px + var(--nav-bottom));
     z-index: 14;
     display: grid;
     place-items: center;
@@ -2012,7 +2019,7 @@ body.dragging {
 
   /* Meldingen nederst ("… ble slettet – Angre") legger seg over menyen */
   .toast {
-    bottom: calc(80px + env(safe-area-inset-bottom, 0px));
+    bottom: calc(76px + var(--nav-bottom));
   }
 }
 
