@@ -6,6 +6,16 @@ Den publiserte appen ligger her: **https://arveadnanes.github.io/matlager/**
 
 Appen virker på mobil og PC, og kan installeres på hjemskjermen som en vanlig app (PWA).
 
+## Prøv appen
+
+Logg inn med demobrukeren for å se hvordan appen ser ut når den er i bruk:
+
+| Brukernavn | Passord |
+| --- | --- |
+| `demo` | `matlager-demo` |
+
+Demobrukeren har kategorier og varer i alle tre stedene, noen varer som går ut snart, og tre favorittoppskrifter. Du kan se deg rundt og prøve «Hva kan jeg lage?», men **endringer lagres ikke**. Vil du bruke appen selv, lager du din egen bruker på innloggingssiden.
+
 ## Hva appen gjør
 
 - **Oversikt per sted:** Varene ligger i Fryser, Kjøleskap eller Tørrvarer. Hver vare har antall, enhet, utløpsdato, notat og kategori. Med + og − justerer du antallet.
@@ -87,14 +97,29 @@ Dette trengs bare hvis du vil kjøre din egen kopi med egen database.
 
 1. Lag et prosjekt i [Firebase-konsollen](https://console.firebase.google.com) og legg til en **web-app**. Lim inn `firebaseConfig` i `firebase.js`.
 2. **Authentication:** Slå på **Email/Password**. Under *Settings → Authorized domains* legger du til domenet appen skal ligge på, f.eks. `brukernavn.github.io`.
-3. **Firestore Database:** Opprett databasen i en europeisk region og lim inn disse reglene. De gjør at hver bruker bare kan lese og skrive sine egne data:
+3. **Firestore Database:** Opprett databasen i en europeisk region og lim inn disse reglene. De gjør dette:
+   - Hver bruker kan bare lese og skrive sine egne data.
+   - Demobrukeren kan bare lese, bortsett fra AI-telleren, som må kunne oppdateres for at AI-forslag skal virke.
 
    ```
    rules_version = '2';
    service cloud.firestore {
      match /databases/{database}/documents {
+       function isOwner(userId) {
+         return request.auth != null && request.auth.uid == userId;
+       }
+       function isDemo() {
+         return request.auth.token.email == "demo@matlager.example.com";
+       }
+
        match /users/{userId}/{document=**} {
-         allow read, write: if request.auth != null && request.auth.uid == userId;
+         allow read: if isOwner(userId);
+         allow write: if isOwner(userId) && !isDemo();
+       }
+
+       // AI-telleren (dagsgrensen) – også for demobrukeren
+       match /users/{userId}/usage/{doc} {
+         allow write: if isOwner(userId);
        }
      }
    }
@@ -118,4 +143,5 @@ Appen publiseres på **GitHub Pages** med arbeidsflyten i `.github/workflows/sta
 - **Glemt passord:** Det finnes ingen tilbakestilling på e-post. Passordet kan endres i appen når du er innlogget, eller brukeren kan slettes i Firebase-konsollen.
 - **Brukernavn** kan bare inneholde a–z, 0–9, `.`, `_` og `-`. Bokstavene æ, ø og å går ikke.
 - **AI-kvoten** telles i appen. En bruker som går rundt appen og skriver direkte til sin egen database, kan i prinsippet nullstille sin egen teller. Googles daglige grense for prosjektet gjelder uansett.
+- **Demobrukeren** er sperret for endringer i databasen, men Firebase kan ikke hindre noen i å bytte passordet til selve kontoen. Slutter `demo` / `matlager-demo` å virke, settes passordet tilbake i Firebase-konsollen under *Authentication → Users*. Demobrukeren deler også én AI-grense på 15 søk per dag med alle som prøver den.
 - **Utløpsdatoer fra bilde** er anslag når datoen ikke står på bildet. De er merket «anslått», så sjekk dem.

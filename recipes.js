@@ -23,6 +23,8 @@ const SAVED_KEY = "matlager-forslag";
 // Forslag du har fjernet med ✕ – AI-en blir bedt om å ikke foreslå dem igjen
 const DISMISSED_KEY = "matlager-avvist";
 const MAX_DISMISSED = 30;
+// Søppelbøtta bak et forslag man sveiper (samme ikon som for varene i app.js)
+const TRASH_ICON = `<svg viewBox="0 0 24 24" aria-hidden="true"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-12M9 7V4h6v3"/></g></svg>`;
 // Er favorittlisten åpen? (huskes på denne enheten)
 const FAVORITES_OPEN_KEY = "matlager-favoritter-apen";
 // "Bruk det som snart går ut" på eller av (huskes på denne enheten)
@@ -544,8 +546,14 @@ function createCard(meal, source, index) {
 
   li.append(button);
 
-  // ✕ øverst i hjørnet: fjern bare dette forslaget (ikke på favoritter)
+  // ✕ øverst i hjørnet: fjern bare dette forslaget (ikke på favoritter).
+  // På mobil kan man også sveipe kortet mot venstre (rødt felt bak).
   if (source === "suggestion") {
+    const swipeDelete = document.createElement("div");
+    swipeDelete.className = "swipe-delete";
+    swipeDelete.innerHTML = TRASH_ICON;
+    li.prepend(swipeDelete);
+
     const remove = document.createElement("button");
     remove.type = "button";
     remove.className = "recipe-remove";
@@ -609,8 +617,72 @@ function mealFromCard(card) {
   return list[Number(card.dataset.index)];
 }
 
+// ---------- Sveip et forslag mot venstre for å fjerne det (mobil) ----------
+// Samme oppførsel som varene i app.js: rødt felt med søppelbøtte, "Angre" etterpå.
+
+const SWIPE_REMOVE = 0.35; // andel av bredden man må sveipe
+let swipe = null; // pågående sveip: { card, pointerId, startX, startY, dx, active }
+let suppressClick = false; // sveipet skal ikke også åpne retten
+
+listEl.addEventListener("pointerdown", (event) => {
+  if (event.pointerType === "mouse") return; // på PC brukes ✕
+  const card = event.target.closest(".recipe-card");
+  if (!card || event.target.closest(".recipe-remove")) return;
+  swipe = { card, pointerId: event.pointerId, startX: event.clientX, startY: event.clientY, dx: 0, active: false };
+});
+
+listEl.addEventListener("pointermove", (event) => {
+  if (!swipe || event.pointerId !== swipe.pointerId) return;
+  const dx = event.clientX - swipe.startX;
+  const dy = event.clientY - swipe.startY;
+
+  if (!swipe.active) {
+    if (Math.abs(dy) > 10) {
+      swipe = null; // fingeren beveger seg opp/ned: det er bla, ikke sveip
+      return;
+    }
+    if (Math.abs(dx) < 10) return; // for lite til å avgjøre ennå
+    swipe.active = true;
+    swipe.card.setPointerCapture(event.pointerId);
+    swipe.card.parentElement.classList.add("swiping"); // vis det røde feltet
+  }
+
+  swipe.dx = Math.min(0, dx); // bare mot venstre
+  swipe.card.style.transform = `translateX(${swipe.dx}px)`;
+});
+
+function endSwipe(cancelled) {
+  if (!swipe) return;
+  const { card, dx, active } = swipe;
+  swipe = null;
+  if (!active) return;
+
+  suppressClick = true;
+  setTimeout(() => (suppressClick = false), 400);
+
+  const li = card.parentElement;
+  card.style.transition = "transform 0.2s ease-out";
+
+  if (!cancelled && -dx > card.offsetWidth * SWIPE_REMOVE) {
+    // Langt nok: skyv kortet ut og fjern forslaget (med "Angre")
+    card.style.transform = "translateX(-100%)";
+    setTimeout(() => removeMeal(Number(card.dataset.index)), 200);
+  } else {
+    // Ikke langt nok: gli tilbake
+    card.style.transform = "";
+    setTimeout(() => {
+      card.style.transition = "";
+      li.classList.remove("swiping");
+    }, 200);
+  }
+}
+
+listEl.addEventListener("pointerup", () => endSwipe(false));
+listEl.addEventListener("pointercancel", () => endSwipe(true));
+
 for (const list of [listEl, favoritesList]) {
   list.addEventListener("click", (event) => {
+    if (suppressClick) return;
     const remove = event.target.closest(".recipe-remove");
     if (remove) {
       removeMeal(Number(remove.dataset.remove));

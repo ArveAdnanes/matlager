@@ -1310,6 +1310,16 @@ dialog h2 {
   text-align: center;
 }
 
+/* Demobrukeren: grønn stripe under topplinjen */
+.demo-banner {
+  padding: 6px 16px;
+  background: var(--accent);
+  color: #fff;
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-align: center;
+}
+
 /* ---------- Kategorier ---------- */
 
 /* Valgt kategori i "Legg til" */
@@ -2465,4 +2475,26 @@ label.options-title {
 /* Navnet skal ikke gå inn under ✕ */
 .recipe-list li:has(.recipe-remove) .recipe-name {
   padding-right: 24px;
+}
+
+/* Sveip et forslag mot venstre (mobil): rødt felt med søppelbøtte bak kortet */
+.recipe-card {
+  position: relative; /* ligger oppå det røde feltet */
+  touch-action: pan-y; /* nettleseren tar bla opp/ned, appen tar sveip sidelengs */
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+.recipe-list li.swiping {
+  overflow: hidden;
+  border-radius: var(--radius);
+  background: var(--danger);
+}
+
+.recipe-list li.swiping .swipe-delete {
+  visibility: visible;
+}
+
+.recipe-list li.swiping .recipe-remove {
+  display: none;
 }

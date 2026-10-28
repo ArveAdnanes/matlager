@@ -116,6 +116,27 @@ const listTitle = document.getElementById("list-title");
 const listCount = document.getElementById("list-count");
 const listMenu = document.getElementById("list-menu");
 const offlineBanner = document.getElementById("offline");
+const demoBanner = document.getElementById("demo-banner");
+
+// Demobruker (se README): alle kan logge inn og se, ingen kan endre
+const DEMO_USER = "demo";
+let isDemo = false;
+
+// Dagen demodataene ble lagt inn. For demobrukeren flyttes alle utløpsdatoer
+// like mange dager fram som det har gått siden, så "går ut i morgen" alltid er
+// i morgen. Endres hvis demodataene legges inn på nytt.
+const DEMO_SEEDED = new Date(2026, 9, 28); // 28. oktober 2026 (måned 9 = oktober)
+
+function shiftDemoDate(expires) {
+  if (!expires) return expires;
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const daysSince = Math.round((today - DEMO_SEEDED) / 86400000);
+  const [y, m, d] = expires.split("-").map(Number);
+  const date = new Date(y, m - 1, d + daysSince);
+  const pad = (n) => String(n).padStart(2, "0");
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
+}
 const editDelete = document.getElementById("edit-delete");
 
 // Varen som nettopp ble lagt til – lyser kort opp i listen
@@ -240,6 +261,11 @@ function migrateLocalItems() {
 // Vis feil ved lagring (f.eks. manglende tilgang)
 function showError(error) {
   console.error(error);
+  // Demobrukeren: Firestore sier nei til endringer – forklar i stedet for å vise en feil
+  if (isDemo && error?.code === "permission-denied") {
+    showToast("Dette er en demobruker – endringer lagres ikke");
+    return;
+  }
   alert("Noe gikk galt ved lagring: " + error.message);
 }
 
@@ -1682,9 +1708,16 @@ watchUser((user) => {
     userInitial.textContent = username.charAt(0).toUpperCase(); // "arve" -> "A"
     userName.textContent = username;
 
-    migrateLocalItems();
+    // Demobrukeren kan bare se – Firestore-reglene stopper alle endringer
+    isDemo = username === DEMO_USER;
+    demoBanner.hidden = !isDemo;
+    changePasswordBtn.hidden = isDemo;
+
+    if (!isDemo) migrateLocalItems();
     stopWatchingItems = watchItems((newItems) => {
-      items = newItems;
+      items = isDemo
+        ? newItems.map((item) => ({ ...item, expires: shiftDemoDate(item.expires) }))
+        : newItems;
       render();
       setRecipeItems(items); // oppskriftene sjekkes mot varene
     }, showError);
@@ -1705,6 +1738,8 @@ watchUser((user) => {
     appSection.hidden = true;
     menu.hidden = true;
     bottomNav.hidden = true;
+    isDemo = false;
+    demoBanner.hidden = true;
     menu.open = false;
     loginSection.hidden = false;
   }
